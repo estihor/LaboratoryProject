@@ -2,10 +2,16 @@
 #include "validations.h"
 
 /* Constants to avoid magic numbers */
-#define NUM_OF_OPERATIONS 16
-#define OK 1
+#define OK_OPERATION 1
+#define OK_OPERANDS 1
+#define OK_REGISTER 1
 #define OPERATION_ERROR 0
 #define OPERANDS_ERROR 0
+#define REGISTER_ERROR 0
+
+#define NUM_OF_OPERATIONS 16
+#define NUM_OF_REGISTERS 8
+
 
 /*
  * An array containing all 16 legal operations in our imaginary machine.
@@ -50,7 +56,7 @@ int find_opcode_and_funct(char* name, unsigned int* opcode, unsigned int* funct)
         {
             *opcode = ArrOperations_opcode_and_funct[i].opcode;
             *funct = ArrOperations_opcode_and_funct[i].funct;
-            return OK;
+            return OK_OPERATION;
         }
     }
     return OPERATION_ERROR;
@@ -98,8 +104,35 @@ int find_num_of_operands(char* name, unsigned int* num_of_operands)
         {
             *num_of_operands = ArrOperations_and_num_of_operands[i].num_of_operands;
 
-            return OK;
+            return  OK_OPERANDS;
         }
     }
     return OPERANDS_ERROR;
+}
+
+/*
+* An array containing all valid register names.
+*/
+char* RegistersTable[NUM_OF_REGISTERS] = {
+    "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"
+};
+
+/*
+ * Checks if a given string is a valid register name.
+ * Receives: A pointer to the string (the word being checked).
+ * Returns: 1 if it is a register, 0 otherwise.
+ */
+int is_register(char* name) {
+    int i;
+
+    /* Iterate through the array to find a match with a register name */
+    for (i = 0; i < NUM_OF_REGISTERS; i++)
+    {
+        if (strcmp(name, RegistersTable[i]) == 0)
+        {
+            return OK_REGISTER; /* Match found! It's a register */
+        }
+    }
+
+    return REGISTER_ERROR; /* Loop finished without a match - not a register */
 }
