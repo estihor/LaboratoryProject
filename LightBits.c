@@ -18,7 +18,7 @@ unsigned short push_opcode(unsigned int opcode)
  * Returns: A 16-bit word with only the funct bits turned on.
  */
 
-/* this is test 2*/
+/* this is test 3*/
 
 unsigned short push_funct(unsigned int funct)
 {
