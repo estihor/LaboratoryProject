@@ -5,13 +5,15 @@
 #define OK_OPERATION 1
 #define OK_OPERANDS 1
 #define OK_REGISTER 1
+#define OK_INSTRUCTION 1
 #define OPERATION_ERROR 0
 #define OPERANDS_ERROR 0
 #define REGISTER_ERROR 0
+#define INSTRUCTION_ERROR 0
 
 #define NUM_OF_OPERATIONS 16
 #define NUM_OF_REGISTERS 8
-
+#define NUM_OF_INSTRUCTIONS 4
 
 /*
  * An array containing all 16 legal operations in our imaginary machine.
@@ -116,7 +118,7 @@ int find_num_of_operands(char* name, unsigned int* num_of_operands)
 /*
 * An array containing all valid register names.
 */
-char* RegistersTable[NUM_OF_REGISTERS] = {
+char* ArrRegister[NUM_OF_REGISTERS] = {
     "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"
 };
 
@@ -132,12 +134,33 @@ int is_it_a_register(char* name)
     /* Iterate through the array to find a match with a register name */
     for (i = 0; i < NUM_OF_REGISTERS; i++)
     {
-        if (strcmp(name, RegistersTable[i]) == 0)
+        if (strcmp(name, ArrRegister[i]) == 0)
         {
             return OK_REGISTER; /* Match found! It's a register */
         }
     }
 
     return REGISTER_ERROR; /* Loop finished without a match - not a register */
+
+}
+/* ggg*/ 
+char* ArrInstructions[NUM_OF_INSTRUCTIONS] = {
+    ".string",".data",".extern" , ".entry",
+};
+
+int is_it_an_instruction(char* name)
+{
+    int i;
+
+    /* Iterate through the array to find a match with an instruction name */
+    for (i = 0; i < NUM_OF_INSTRUCTIONS; i++)
+    {
+        if (strcmp(name, ArrInstructions[i]) == 0)
+        {
+            return OK_INSTRUCTION; /* Match found! It's a instruction */
+        }
+    }
+
+    return INSTRUCTION_ERROR; /* Loop finished without a match - not an instruction */
 
 }
