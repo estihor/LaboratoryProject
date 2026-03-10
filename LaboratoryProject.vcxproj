@@ -129,8 +129,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LightBits.h" />
-    <ClInclude Include="TheMainPart.h" />
     <ClInclude Include="validations.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
