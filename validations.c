@@ -19,14 +19,13 @@
  * and retrieve its matching opcode and funct values for binary translation.
  */
 
-/* This is my test one */
 
 Operations1  ArrOperations_opcode_and_funct[] = {
     {"mov", 0, 0},
     {"cmp", 1, 0},
     {"add", 2,10},
     {"sub", 2, 11},
-    {"lea", 4,  0},
+    {"lea", 4, 0},
     {"clr", 5, 10},
     {"not", 5, 11},
     {"inc", 5, 12},
@@ -50,16 +49,18 @@ Operations1  ArrOperations_opcode_and_funct[] = {
 int find_opcode_and_funct(char* name, unsigned int* opcode, unsigned int* funct)
 {
     int i;
+    /* Iterate through the operations array to find a matching command name */
     for (i = 0; i < NUM_OF_OPERATIONS; i++)
     {
         if (strcmp(name, ArrOperations_opcode_and_funct[i].name) == 0)
         {
+            /* Match found! Update the values using the provided pointers */
             *opcode = ArrOperations_opcode_and_funct[i].opcode;
             *funct = ArrOperations_opcode_and_funct[i].funct;
-            return OK_OPERATION;
+            return OK_OPERATION; /* Return success status */
         }
     }
-    return OPERATION_ERROR;
+    return OPERATION_ERROR; /* Loop finished without a match - invalid operation */
 }
 
 
@@ -98,16 +99,18 @@ Operations2  ArrOperations_and_num_of_operands[] = {
 int find_num_of_operands(char* name, unsigned int* num_of_operands)
 {
     int i;
+    /* Iterate through the array to find the command and its operands count */
     for (i = 0; i < NUM_OF_OPERATIONS; i++)
     {
         if (strcmp(name, ArrOperations_and_num_of_operands[i].name) == 0)
-        {
+        {  
+            /* Match found! Update the pointer with the correct number of operands */
             *num_of_operands = ArrOperations_and_num_of_operands[i].num_of_operands;
 
-            return  OK_OPERANDS;
+            return  OK_OPERANDS; /* Return success status */
         }
     }
-    return OPERANDS_ERROR;
+    return OPERANDS_ERROR; /* Loop finished without a match - invalid operation */
 }
 
 /*
@@ -122,7 +125,8 @@ char* RegistersTable[NUM_OF_REGISTERS] = {
  * Receives: A pointer to the string (the word being checked).
  * Returns: 1 if it is a register, 0 otherwise.
  */
-int is_register(char* name) {
+int is_it_a_register(char* name)
+{
     int i;
 
     /* Iterate through the array to find a match with a register name */
@@ -135,4 +139,5 @@ int is_register(char* name) {
     }
 
     return REGISTER_ERROR; /* Loop finished without a match - not a register */
+
 }
