@@ -6,6 +6,8 @@
  * and retrieve its matching opcode and funct values for binary translation.
  */
 
+/* This is test two */
+
 Operations1  ArrOperations_opcode_and_funct[] = {
     {"mov", 0, 0},
     {"cmp", 1, 0},

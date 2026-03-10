@@ -17,6 +17,9 @@ unsigned short push_opcode(unsigned int opcode)
  * * funct: The numeric value of the function (e.g., 10 for 'add').
  * Returns: A 16-bit word with only the funct bits turned on.
  */
+
+/* this is test 2*/
+
 unsigned short push_funct(unsigned int funct)
 {
     return  funct << 4;
