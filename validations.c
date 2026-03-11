@@ -6,7 +6,7 @@
 #define OK_OPERANDS 1
 #define OK_REGISTER 1
 #define OK_INSTRUCTION 1
-#define OK_LABLE 1
+#define OK_LABEL 1
 
 #define OPERATION_ERROR 0
 #define OPERANDS_ERROR 0
@@ -25,7 +25,6 @@
 #define ADDRESSING_MODE_3 3
 #define ERROR_ADDRESSING_MODE -1
 #define LABEL_LENGTH 31
-
 
 
 /*
@@ -111,7 +110,7 @@ Operations2  ArrOperations_and_num_of_operands[] = {
  * If it is not valid, it returns 0 (OPERANDS_ERROR).
  */
 
-int find_num_of_operands(char* name, unsigned int* num_of_operands)
+int is_it_an_operation_and_find_operands(char* name, unsigned int* num_of_operands)
 {
 	int i;
 	/* Iterate through the array to find the command and its operands count */
@@ -178,55 +177,82 @@ int is_it_an_instruction(char* name)
 
 }
 
-/*
- * Checks if a given string is a valid assembly label declaration (ending with ':').
- * A valid label cannot be a reserved word (register, operation, directive, or macro).
- * It must not exceed the maximum length, must start with an English letter,
- * and contain only alphanumeric characters.
- * * @param macrosArray A pointer to the array of defined macros.
- * @param name A pointer to the string to be checked.
- * @param totalMacros The total number of macros currently defined.
- * @return OK_LABLE (1) if it's a valid label, LABEL_ERROR (0) otherwise.
+/**
+* Checks if a given string is a reserved word in the assembly language.
+* A reserved word can be an operation name (e.g., mov, add), a register (e.g., r1, r2),
+* an instruction directive (e.g., .data, .string), or a previously defined macro.
+*
+* @param macrosArray A pointer to the array of currently defined macros.
+* @param name The string to be checked.
+* @param totalMacros The number of macros defined so far.
+* @return 1 if the string is a reserved word (cannot be used as a label), 0 otherwise.
+*/
+int is_reserved_word(OneMakro* macrosArray, char* name, int totalMacros)
+{
+	unsigned int num;
+	int i; 
+
+	/* Safety check for empty input */
+	if (name == NULL || name[0] == '\0')
+		return 1;
+
+	/* Check against all reserved categories */
+	if (is_it_a_register(name) == OK_REGISTER ||
+		is_it_an_operation_and_find_operands(name, &num) == OK_OPERANDS ||
+		is_it_an_instruction(name) == OK_INSTRUCTION ||
+		is_it_a_macro(macrosArray, name, totalMacros) != MACRO_ERROR)
+	{
+		return 1; /* It is a reserved word */
+	}
+
+	/* Check for directives WITHOUT the dot (e.g., "data" instead of ".data") */
+	for (i = 0; i < NUM_OF_INSTRUCTIONS; i++) {
+		/* ArrInstructions[i] + 1 skips the dot '.' */
+		if (strcmp(name, ArrInstructions[i] + 1) == 0) {
+			return 1; /* It's a reserved word! */
+		}
+
+	return 0; /* Not a reserved word, potentially a valid label name */
+}
+
+/**
+ * Validates if a string is a legal label name according to assembly rules.
+ * A legal label must:
+ * 1. Not be a reserved word (operation, register, instruction, or macro).
+ * 2. Start with an English letter.
+ * 3. Contain only alphanumeric characters.
+ * 4. Not exceed the maximum length (31 characters).
+ *
+ * @param macrosArray Pointer to the defined macros.
+ * @param name The label name to check (should not include a trailing ':').
+ * @param totalMacros Number of macros currently in the system.
+ * @return OK_LABEL (1) if valid, LABEL_ERROR (0) otherwise.
  */
 int is_it_a_valid_label(OneMakro* macrosArray, char* name, int totalMacros)
 {
-	unsigned int num;
-	int i;   /* Declared at the top to comply with ANSI C standards */
-	int len; /* Used to store the string length efficiently */
+	int i, len;
 
-	/* 0. Safety check: Ensure the string is not NULL or empty */
+	/* 0. Basic validation: must not be empty and must not be a reserved word */
 	if (name == NULL || name[0] == '\0')
 		return LABEL_ERROR;
 
-	/* 1. Check if the label name is a reserved register name */
-	if (is_it_a_register(name) == OK_REGISTER)
+	/* Ensure the name isn't already taken by a register, command, or macro */
+	if (is_reserved_word(macrosArray, name, totalMacros))
 		return LABEL_ERROR;
 
-	/* 2. Check if the label name is a reserved operation name */
-	if (is_it_an_operand_if_so_find_num_of_operands(name, &num) == OK_OPERANDS)
-		return LABEL_ERROR;
-
-	/* 3. Check if the label name is a reserved instruction (directive) */
-	if (is_it_an_instruction(name) == OK_INSTRUCTION)
-		return LABEL_ERROR;
-
-	/* 4. Check if the label name is already defined as a macro */
-	if (is_it_a_macro(macrosArray, name, totalMacros) != MACRO_ERROR)
-		return LABEL_ERROR;
-
-	/* 5. Check if the label exceeds the maximum allowed length */
+	/* 1. Check length: A label name cannot exceed 31 characters */
 	len = strlen(name);
 	if (len > LABEL_LENGTH)
 		return LABEL_ERROR;
 
-	/* 6. Check if the first character is an English letter */
+	/* 2. Syntax rule: The first character must be an English letter (A-Z or a-z) */
 	if (!((name[0] >= 'a' && name[0] <= 'z') || (name[0] >= 'A' && name[0] <= 'Z')))
 		return LABEL_ERROR;
 
-	/* 7. Check if all characters (except the last ':') are alphanumeric */
-	for (i = 1; i < len - 1; i++)
+	/* 3. Check the rest of the name: only letters and digits are allowed */
+	for (i = 1; i < len; i++)
 	{
-		/* Note: Included '0' to allow numbers like LOOP0 */
+		/* If a character is not a letter and not a digit, it's an invalid label */
 		if (!((name[i] >= 'a' && name[i] <= 'z') ||
 			(name[i] >= 'A' && name[i] <= 'Z') ||
 			(name[i] >= '0' && name[i] <= '9')))
@@ -235,12 +261,8 @@ int is_it_a_valid_label(OneMakro* macrosArray, char* name, int totalMacros)
 		}
 	}
 
-	/* 8. Check if the last character is a colon (':') indicating a label declaration */
-	if (name[len - 1] != ':')
-		return LABEL_ERROR;
-
-	/* 9. If all checks passed successfully, it is a perfectly valid label! */
-	return OK_LABLE;
+	/* 4. Success: All checks passed, the label name is valid */
+	return OK_LABEL;
 }
 
 
@@ -252,22 +274,26 @@ int is_it_a_valid_label(OneMakro* macrosArray, char* name, int totalMacros)
 int what_is_the_addressing_mode(const char* argument)
 {
 	/* Safety check: ensure the pointer is not NULL and string is not empty */
-	if (argument == NULL || argument[0] == '\0') {
+	if (argument == NULL || argument[0] == '\0')
+	{
 		return -1;
 	}
 
 	/* Check if it's Addressing Mode 0 (Immediate - Starts with '#') */
-	if (argument[0] == '#') {
+	if (argument[0] == '#')
+	{
 		return ADDRESSING_MODE_0;
 	}
 
 	/* Check if it's Addressing Mode 2 (Relative - Starts with '%') */
-	if (argument[0] == '%') {
+	if (argument[0] == '%')
+	{
 		return ADDRESSING_MODE_2;
 	}
 
 	/* Check if it's Addressing Mode 3 (Direct Register) */
-	if (is_it_a_register(argument) == OK_REGISTER) {
+	if (is_it_a_register(argument) == OK_REGISTER)
+	{
 		return ADDRESSING_MODE_3;
 	}
 
