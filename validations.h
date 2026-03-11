@@ -23,12 +23,20 @@ typedef struct {
 
 } Operations2;
 
+typedef struct
+{
+    char* Makroname;
+    char* MakroContent;
+} OneMakro;
+
 
  /* * File: operations.h
   * Contains declarations for searching assembly operations.
   */
 int find_opcode_and_funct(char* name, unsigned int* opcode, unsigned int* funct);
-int find_num_of_operands(char* name, unsigned int* num_of_operands);
+int is_it_an_operation_and_find_operands(char* name, unsigned int* num_of_operands);
 int is_it_a_register(char* name);
 int is_it_an_instruction(char* name);
-int what_is_the_addressing_mode(char* argument)
+int is_reserved_word(OneMakro* macrosArray, char* name, int totalMacros);
+int what_is_the_addressing_mode(char* argument);
+int is_it_a_valid_label(OneMakro* macrosArray, char* name, int totalMacros);
