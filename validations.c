@@ -8,6 +8,9 @@
 #define OK_INSTRUCTION 1
 #define OK_LABEL 1
 #define OK_ADDRESSING_MODE_0 1
+#define OK_ADDRESSING_MODE_2 1
+#define OK_TYPE_OF_OPERANDS 1
+
 
 #define OPERATION_ERROR 0
 #define OPERANDS_ERROR 0
@@ -16,16 +19,20 @@
 #define LABEL_ERROR 0
 #define MACRO_ERROR -1
 #define ADDRESSING_MODE_0_ERROR 0
+#define ADDRESSING_MODE_2_ERROR 0
+#define TYPE_OF_OPERANDS_ERROR 0
+#define NO_OPERAND -1
+
 
 #define NUM_OF_OPERATIONS 16
 #define NUM_OF_REGISTERS 8
 #define NUM_OF_INSTRUCTIONS 4
 
+
 #define ADDRESSING_MODE_0 0
 #define ADDRESSING_MODE_1 1
 #define ADDRESSING_MODE_2 2
 #define ADDRESSING_MODE_3 3
-#define ERROR_ADDRESSING_MODE -1
 #define LABEL_LENGTH 31
 
 
@@ -339,3 +346,100 @@ int is_addressing_mode_0_valid(char* argument)
 	/*  If we passed the entire loop without returning an error - it's a valid number! */
 	return OK_ADDRESSING_MODE_0;
 }
+
+
+
+
+/*
+ * Validates if a string is a valid relative addressing operand (Mode 2).
+ * It expects the string to start with '%' followed by a valid label name.
+ * @param macrosArray A pointer to the array of currently defined macros.
+ * @param argument The operand string to check (e.g., "%LOOP").
+ * @param totalMacros The number of macros defined so far.
+ * @return OK_ADDRESSING_MODE_2 (1) if valid, ADDRESSING_MODE_2_ERROR (0) otherwise.
+ */
+int is_addressing_mode_2_valid(OneMakro* macrosArray, char* argument, int totalMacros)
+{
+	/* 1. Safety check before accessing the string */
+	if (argument == NULL || argument[0] == '\0')
+		return ADDRESSING_MODE_2_ERROR;
+
+	/* 2. Check if the first character is indeed '%' */
+	if (argument[0] != '%')
+		return ADDRESSING_MODE_2_ERROR;
+
+	/* 3. Check if the rest of the string is a valid label.
+	 * We use argument + 1 to skip the '%' and send only the label name. */
+	if (is_it_a_valid_label(macrosArray, argument + 1, totalMacros) == OK_LABEL)
+	{
+		return OK_ADDRESSING_MODE_2; /* It passed! */
+	}
+
+	/* 4. If the label check failed, return an error */
+	return ADDRESSING_MODE_2_ERROR;
+}
+
+Operations3  ArrOperations_addressing_modes[] = 
+{
+	/* Name, {Source Modes}, {Destination Modes} */
+	{"mov",  {1, 1, 0, 1},  {0, 1, 0, 1}},
+	{"cmp",  {1, 1, 0, 1},  {1, 1, 0, 1}},
+	{"add",  {1, 1, 0, 1},  {0, 1, 0, 1}},
+	{"sub",  {1, 1, 0, 1},  {0, 1, 0, 1}},
+	{"lea",  {0, 1, 0, 0},  {0, 1, 0, 1}},
+	{"clr",  {0, 0, 0, 0},  {0, 1, 0, 1}},
+	{"not",  {0, 0, 0, 0},  {0, 1, 0, 1}},
+	{"inc",  {0, 0, 0, 0},  {0, 1, 0, 1}},
+	{"dec",  {0, 0, 0, 0},  {0, 1, 0, 1}},
+	{"jmp",  {0, 0, 0, 0},  {0, 1, 1, 0}},
+	{"bne",  {0, 0, 0, 0},  {0, 1, 1, 0}},
+	{"jsr",  {0, 0, 0, 0},  {0, 1, 1, 0}},
+	{"red",  {0, 0, 0, 0},  {0, 1, 0, 1}},
+	{"prn",  {0, 0, 0, 0},  {1, 1, 0, 1}},
+	{"rts",  {0, 0, 0, 0},  {0, 0, 0, 0}},
+	{"stop", {0, 0, 0, 0},  {0, 0, 0, 0}}
+};
+
+/**
+ * Validates if the given addressing modes are legal for a specific assembly operation.
+ * The function searches for the operation in the lookup table and checks if the
+ * provided source and destination modes are allowed according to the language rules.
+ * * @param operation_name The name of the assembly operation (e.g., "mov", "lea", "stop").
+ * @param source_mode The addressing mode of the source operand (0-3), or NO_OPERAND if it doesn't exist.
+ * @param destination_mode The addressing mode of the destination operand (0-3), or NO_OPERAND if it doesn't exist.
+ * @return OK_TYPE_OF_OPERANDS (1) if the addressing modes are valid, TYPE_OF_OPERANDS_ERROR (0) otherwise.
+ */
+int is_valid_addressing(char* operation_name, int source_mode, int destination_mode)
+{
+	int i;
+
+	/* Iterate through the array of operations to find a match */
+	for (i = 0; i < NUM_OF_OPERATIONS; i++)
+	{
+		/* Check if the current operation in the array matches the requested name */
+		if (strcmp(operation_name, ArrOperations_addressing_modes[i].name) == 0)
+		{
+			/* --- Match found! Now validate the operands --- */
+			/* 1. Validate the source operand (if one is required/provided) */
+			if (source_mode != NO_OPERAND)
+			{
+				/* If the array contains 0 for this mode, it is an illegal addressing mode */
+				if (ArrOperations_addressing_modes[i].arr_source_operand[source_mode] == 0)
+					return TYPE_OF_OPERANDS_ERROR;
+			}
+
+			/* 2. Validate the destination operand (if one is required/provided) */
+			if (destination_mode != NO_OPERAND)
+			{
+				/* If the array contains 0 for this mode, it is an illegal addressing mode */
+				if (ArrOperations_addressing_modes[i].arr_destination_operand[destination_mode] == 0)
+					return TYPE_OF_OPERANDS_ERROR;
+			}
+			/* Both operands were checked and found valid according to the lookup table */
+			return OK_TYPE_OF_OPERANDS;
+		}
+	}
+	/* The loop finished but the operation name was not found in the array */
+	return TYPE_OF_OPERANDS_ERROR;
+}
+

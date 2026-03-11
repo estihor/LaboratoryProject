@@ -6,7 +6,8 @@
  * opcode: The primary operation code.
  * funct:  The secondary function code (0 if not applicable).
  */
-typedef struct {
+typedef struct 
+{
     char* name;
     unsigned int opcode;
     unsigned int funct;
@@ -17,11 +18,19 @@ typedef struct {
  * name: The name of the assembly command.
  * num_of_operands: The exact number of operands this command requires.
  */
-typedef struct {
+typedef struct 
+{
     char* name;
     unsigned int num_of_operands;
 
 } Operations2;
+
+typedef struct 
+{
+    char* name;
+    int arr_source_operand[4];
+    int arr_destination_operand[4];
+} Operations3;
 
 typedef struct
 {
@@ -41,3 +50,4 @@ int is_reserved_word(OneMakro* macrosArray, char* name, int totalMacros);
 int what_is_the_addressing_mode(char* argument);
 int is_it_a_valid_label(OneMakro* macrosArray, char* name, int totalMacros);
 int is_addressing_mode_0_valid(char* argument);
+int is_valid_addressing(char* operation_name, int source_mode, int destination_mode);
