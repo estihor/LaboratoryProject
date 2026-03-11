@@ -31,3 +31,4 @@ int find_opcode_and_funct(char* name, unsigned int* opcode, unsigned int* funct)
 int find_num_of_operands(char* name, unsigned int* num_of_operands);
 int is_it_a_register(char* name);
 int is_it_an_instruction(char* name);
+int what_is_the_addressing_mode(char* argument)
