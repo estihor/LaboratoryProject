@@ -6,10 +6,13 @@
 #define OK_OPERANDS 1
 #define OK_REGISTER 1
 #define OK_INSTRUCTION 1
+#define OK_LABLE 1 
+
 #define OPERATION_ERROR 0
 #define OPERANDS_ERROR 0
 #define REGISTER_ERROR 0
 #define INSTRUCTION_ERROR 0
+#define LABEL_ERROR 0
 
 #define NUM_OF_OPERATIONS 16
 #define NUM_OF_REGISTERS 8
@@ -149,7 +152,7 @@ int is_it_a_register(char* name)
 	return REGISTER_ERROR; /* Loop finished without a match - not a register */
 
 }
-/* ggg*/
+
 char* ArrInstructions[NUM_OF_INSTRUCTIONS] = {
 	".string",".data",".extern" , ".entry",
 };
@@ -170,6 +173,42 @@ int is_it_an_instruction(char* name)
 	return INSTRUCTION_ERROR; /* Loop finished without a match - not an instruction */
 
 }
+
+int is_it_a_valid_label(OneMakro* macrosArray ,char* name, int totalMacros)
+{
+	unsigned int* num;
+	if (is_it_a_register(name) == 1);
+	    return LABEL_ERROR;
+
+	if (is_it_an_operand_if_so_find_num_of_operands(name,num)==1)
+		return LABEL_ERROR;
+
+	if (is_it_an_instruction(name) == 1);
+	    return LABEL_ERROR;
+
+	if (is_it_a_macro(macrosArray,name, totalMacros) !=-1);
+	    return LABEL_ERROR;
+
+    if(strlen(name)>31)
+		return LABEL_ERROR;
+
+	if(!((name[0] > 'a'&& name[0] < 'z' ) || (name[0] > 'A' && name[0] < 'Z')))
+		return LABEL_ERROR;
+
+	int i;
+	for (i = 1; i < strlen(name)-1; i++)
+	{
+		
+		if (!((name[i] > 'a' && name[i] < 'z') || (name[i] > 'A' && name[i] < 'Z')|| (name[i] >= 1 && name[i] <= 9)))
+			return LABEL_ERROR;
+
+	}
+
+	if(name[strlen(name) - 1]!=':')
+		return LABEL_ERROR;
+
+}
+
 
 /*
  * Determines the addressing mode of a given assembly argument.
