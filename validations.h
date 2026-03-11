@@ -40,3 +40,4 @@ int is_it_an_instruction(char* name);
 int is_reserved_word(OneMakro* macrosArray, char* name, int totalMacros);
 int what_is_the_addressing_mode(char* argument);
 int is_it_a_valid_label(OneMakro* macrosArray, char* name, int totalMacros);
+int is_addressing_mode_0_valid(char* argument);

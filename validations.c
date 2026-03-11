@@ -7,6 +7,7 @@
 #define OK_REGISTER 1
 #define OK_INSTRUCTION 1
 #define OK_LABEL 1
+#define OK_ADDRESSING_MODE_0 1
 
 #define OPERATION_ERROR 0
 #define OPERANDS_ERROR 0
@@ -14,6 +15,7 @@
 #define INSTRUCTION_ERROR 0
 #define LABEL_ERROR 0
 #define MACRO_ERROR -1
+#define ADDRESSING_MODE_0_ERROR 0
 
 #define NUM_OF_OPERATIONS 16
 #define NUM_OF_REGISTERS 8
@@ -206,12 +208,14 @@ int is_reserved_word(OneMakro* macrosArray, char* name, int totalMacros)
 	}
 
 	/* Check for directives WITHOUT the dot (e.g., "data" instead of ".data") */
-	for (i = 0; i < NUM_OF_INSTRUCTIONS; i++) {
+	for (i = 0; i < NUM_OF_INSTRUCTIONS; i++)
+	{
 		/* ArrInstructions[i] + 1 skips the dot '.' */
-		if (strcmp(name, ArrInstructions[i] + 1) == 0) {
+		if (strcmp(name, ArrInstructions[i] + 1) == 0)
+		{
 			return 1; /* It's a reserved word! */
 		}
-
+	}
 	return 0; /* Not a reserved word, potentially a valid label name */
 }
 
@@ -241,7 +245,7 @@ int is_it_a_valid_label(OneMakro* macrosArray, char* name, int totalMacros)
 		return LABEL_ERROR;
 
 	/* 1. Check length: A label name cannot exceed 31 characters */
-	len = strlen(name);
+	len = (int)strlen(name);
 	if (len > LABEL_LENGTH)
 		return LABEL_ERROR;
 
@@ -271,7 +275,7 @@ int is_it_a_valid_label(OneMakro* macrosArray, char* name, int totalMacros)
  * * @param argument - A pointer to the operand string (e.g., "#5", "r3", "LABEL").
  * @return The addressing mode (0, 1, 2, or 3) or -1 if the argument is invalid.
  */
-int what_is_the_addressing_mode(const char* argument)
+int what_is_the_addressing_mode( char* argument)
 {
 	/* Safety check: ensure the pointer is not NULL and string is not empty */
 	if (argument == NULL || argument[0] == '\0')
@@ -299,4 +303,39 @@ int what_is_the_addressing_mode(const char* argument)
 
 	/* Default case: If none of the above, it's Addressing Mode 1 (Direct - Label) */
 	return ADDRESSING_MODE_1;
+}
+
+/* * Validates if a string represents a valid integer for addressing mode 0.
+ * An optional '+' or '-' sign is allowed at the beginning, followed only by digits.
+ * @param argument A pointer to the argument string (e.g., "+5", "-12", "42").
+ * @return OK_ADDRESSING_MODE_0 (1) if valid, ADDRESSING_MODE_0_ERROR (0) otherwise.
+ */
+int is_addressing_mode_0_valid(char* argument)
+{
+	/* Must initialize to 0 to always start from the first character */
+	int i = 0;
+
+	/*  safety check before accessing the string */
+	if (argument == NULL || argument[0] == '\0')
+		return ADDRESSING_MODE_0_ERROR;
+
+	/*  Check for an optional '+' or '-' sign. If found, advance 'i' */
+	if (argument[0] == '+' || argument[0] == '-')
+		i++;
+
+	/*  Edge case check: return an error if there is ONLY a sign without numbers */
+	if (argument[i] == '\0')
+		return ADDRESSING_MODE_0_ERROR;
+
+	/*  Iterate over the remaining characters.
+	 * Loop initialization is omitted so 'i' continues from its current position! */
+	for (; i < strlen(argument); i++)
+	{
+		/* If the current character is not between '0' and '9', it's invalid */
+		if (argument[i] < '0' || argument[i] > '9')
+			return ADDRESSING_MODE_0_ERROR;
+	}
+
+	/*  If we passed the entire loop without returning an error - it's a valid number! */
+	return OK_ADDRESSING_MODE_0;
 }
