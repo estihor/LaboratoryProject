@@ -6,13 +6,14 @@
 #define OK_OPERANDS 1
 #define OK_REGISTER 1
 #define OK_INSTRUCTION 1
-#define OK_LABLE 1 
+#define OK_LABLE 1
 
 #define OPERATION_ERROR 0
 #define OPERANDS_ERROR 0
 #define REGISTER_ERROR 0
 #define INSTRUCTION_ERROR 0
 #define LABEL_ERROR 0
+#define MACRO_ERROR -1
 
 #define NUM_OF_OPERATIONS 16
 #define NUM_OF_REGISTERS 8
@@ -23,6 +24,9 @@
 #define ADDRESSING_MODE_2 2
 #define ADDRESSING_MODE_3 3
 #define ERROR_ADDRESSING_MODE -1
+#define LABEL_LENGTH 31
+
+
 
 /*
  * An array containing all 16 legal operations in our imaginary machine.
@@ -174,70 +178,99 @@ int is_it_an_instruction(char* name)
 
 }
 
-int is_it_a_valid_label(OneMakro* macrosArray ,char* name, int totalMacros)
+/*
+ * Checks if a given string is a valid assembly label declaration (ending with ':').
+ * A valid label cannot be a reserved word (register, operation, directive, or macro).
+ * It must not exceed the maximum length, must start with an English letter,
+ * and contain only alphanumeric characters.
+ * * @param macrosArray A pointer to the array of defined macros.
+ * @param name A pointer to the string to be checked.
+ * @param totalMacros The total number of macros currently defined.
+ * @return OK_LABLE (1) if it's a valid label, LABEL_ERROR (0) otherwise.
+ */
+int is_it_a_valid_label(OneMakro* macrosArray, char* name, int totalMacros)
 {
-	unsigned int* num;
-	if (is_it_a_register(name) == 1);
-	    return LABEL_ERROR;
+	unsigned int num;
+	int i;   /* Declared at the top to comply with ANSI C standards */
+	int len; /* Used to store the string length efficiently */
 
-	if (is_it_an_operand_if_so_find_num_of_operands(name,num)==1)
+	/* 0. Safety check: Ensure the string is not NULL or empty */
+	if (name == NULL || name[0] == '\0')
 		return LABEL_ERROR;
 
-	if (is_it_an_instruction(name) == 1);
-	    return LABEL_ERROR;
-
-	if (is_it_a_macro(macrosArray,name, totalMacros) !=-1);
-	    return LABEL_ERROR;
-
-    if(strlen(name)>31)
+	/* 1. Check if the label name is a reserved register name */
+	if (is_it_a_register(name) == OK_REGISTER)
 		return LABEL_ERROR;
 
-	if(!((name[0] > 'a'&& name[0] < 'z' ) || (name[0] > 'A' && name[0] < 'Z')))
+	/* 2. Check if the label name is a reserved operation name */
+	if (is_it_an_operand_if_so_find_num_of_operands(name, &num) == OK_OPERANDS)
 		return LABEL_ERROR;
 
-	int i;
-	for (i = 1; i < strlen(name)-1; i++)
+	/* 3. Check if the label name is a reserved instruction (directive) */
+	if (is_it_an_instruction(name) == OK_INSTRUCTION)
+		return LABEL_ERROR;
+
+	/* 4. Check if the label name is already defined as a macro */
+	if (is_it_a_macro(macrosArray, name, totalMacros) != MACRO_ERROR)
+		return LABEL_ERROR;
+
+	/* 5. Check if the label exceeds the maximum allowed length */
+	len = strlen(name);
+	if (len > LABEL_LENGTH)
+		return LABEL_ERROR;
+
+	/* 6. Check if the first character is an English letter */
+	if (!((name[0] >= 'a' && name[0] <= 'z') || (name[0] >= 'A' && name[0] <= 'Z')))
+		return LABEL_ERROR;
+
+	/* 7. Check if all characters (except the last ':') are alphanumeric */
+	for (i = 1; i < len - 1; i++)
 	{
-		
-		if (!((name[i] > 'a' && name[i] < 'z') || (name[i] > 'A' && name[i] < 'Z')|| (name[i] >= 1 && name[i] <= 9)))
+		/* Note: Included '0' to allow numbers like LOOP0 */
+		if (!((name[i] >= 'a' && name[i] <= 'z') ||
+			(name[i] >= 'A' && name[i] <= 'Z') ||
+			(name[i] >= '0' && name[i] <= '9')))
+		{
 			return LABEL_ERROR;
-
+		}
 	}
 
-	if(name[strlen(name) - 1]!=':')
+	/* 8. Check if the last character is a colon (':') indicating a label declaration */
+	if (name[len - 1] != ':')
 		return LABEL_ERROR;
 
+	/* 9. If all checks passed successfully, it is a perfectly valid label! */
+	return OK_LABLE;
 }
 
 
-/*
- * Determines the addressing mode of a given assembly argument.
- * The function analyzes the prefix and format of the argument string
- * to classify it into one of the valid addressing modes.
- * * Receives: A pointer to the argument string to be checked.
- * Returns: The correct addressing mode (0, 1, 2, or 3),
- * or ERROR_ADDRESSING_MODE if the argument is totally invalid.
+/**
+ * Determines the addressing mode of a given operand string.
+ * * @param argument - A pointer to the operand string (e.g., "#5", "r3", "LABEL").
+ * @return The addressing mode (0, 1, 2, or 3) or -1 if the argument is invalid.
  */
-int what_is_the_addressing_mode(char* argument)
+int what_is_the_addressing_mode(const char* argument)
 {
-
-	/* 1. Check if it's Addressing Mode 0 (Starts with '#') */
-	if (argument[0] == '#')
-		return ADDRESSING_MODE_0;
-
-	/* 2. Check if it's Addressing Mode 1 (Starts with '%') */
-	if (argument[0] == '%')
-		return ADDRESSING_MODE_1;
-
-	/* 4. Check if it's Addressing Mode 2 (Usually a Direct Label) */
-	if (is_it_a_valid_label(argument) == 1) 
-		return ADDRESSING_MODE_2;
-
-    /* 3. Check if it's Addressing Mode 3 (Register)*/
-	if (is_it_a_register(argument) == OK_REGISTER)
-		return ADDRESSING_MODE_3;
-
-	/* 5. If it passed all the checks and didn't match anything - it's an error! */
-	else
-		return ERROR_ADDRESSING_MODE;
+	/* Safety check: ensure the pointer is not NULL and string is not empty */
+	if (argument == NULL || argument[0] == '\0') {
+		return -1;
 	}
+
+	/* Check if it's Addressing Mode 0 (Immediate - Starts with '#') */
+	if (argument[0] == '#') {
+		return ADDRESSING_MODE_0;
+	}
+
+	/* Check if it's Addressing Mode 2 (Relative - Starts with '%') */
+	if (argument[0] == '%') {
+		return ADDRESSING_MODE_2;
+	}
+
+	/* Check if it's Addressing Mode 3 (Direct Register) */
+	if (is_it_a_register(argument) == OK_REGISTER) {
+		return ADDRESSING_MODE_3;
+	}
+
+	/* Default case: If none of the above, it's Addressing Mode 1 (Direct - Label) */
+	return ADDRESSING_MODE_1;
+}
