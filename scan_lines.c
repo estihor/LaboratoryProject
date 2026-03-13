@@ -1,4 +1,5 @@
 #include<string.h>
+#include"scan_lines.h"
 
 #define OK_STRING 1
 #define OK_COMMA 1
@@ -12,7 +13,7 @@
  * @param index The current position in the line.
  * @return The updated index pointing to the first non-white-space character.
  */
-int skip_the_white_spaces(char* line, int index)
+int skip_the_spaces(char* line, int index)
 {
 	/* * Loop as long as the current character is a space or a tab.
 	 * We do NOT skip '\n' because it marks the end of the instruction line.
@@ -77,7 +78,7 @@ int cut_the_next_word(char* line, int index, char* the_cut_word)
 int check_and_skip_comma(char* line, int index)
 {
     /* Skip any white spaces before the expected comma */
-    index = skip_the_white_spaces(line, index);
+    index = skip_the_spaces(line, index);
 
     /* Check if the current character is a comma */
     if (line[index] == ',')
@@ -91,21 +92,49 @@ int check_and_skip_comma(char* line, int index)
 }
 
 
-
-
-
-
-
-int is_str_valid( char* the_string)
+/**
+ * Validates the syntax and content of a string literal operand.
+ * Ensures the string is enclosed in double quotes, contains only printable
+ * ASCII characters, and has no extraneous text after the closing quote.
+ *
+ * @param line The original line of text from the file.
+ * @param index The current position in the line array.
+ * @return OK_STRING if the string is valid, STRING_ERROR otherwise.
+ */
+int is_str_valid(char* line, int index)
 {
-	int i;
-	 int len_str = strlen(the_string);
-	if (the_string[0] != '"' || the_string[len_str - 1] != '\"')
-		return STRING_ERROR;
-	for (i = 1; i < len_str - 1; i++)
-	{
-		if (! (the_string[i] >= ' ' && the_string[i] <= '~'))
-			return STRING_ERROR;
-	}
-	OK_STRING;
+    /* Skip white spaces before the expected opening quote */
+    index = skip_the_spaces(line, index);
+
+    /* Check for the opening double quote */
+    if (line[index] != '"')
+        return STRING_ERROR;
+
+    index++;
+
+    /* Run through the string until a closing quote, newline, or null terminator */
+    while (line[index] != '"' && line[index] != '\n' && line[index] != '\0')
+    {
+        /* Verify that the character is a valid printable ASCII character */
+        if (!(line[index] >= ' ' && line[index] <= '~'))
+            return STRING_ERROR;
+
+        index++;
+    }
+
+    /* Ensure the loop actually stopped at the closing double quote */
+    if (line[index] != '"')
+        return STRING_ERROR;
+
+    index++;
+
+    /* Skip white spaces after the string to check for trailing garbage */
+    index = skip_the_spaces(line, index);
+
+    /* Verify we reached a clean newline or null terminator */
+    if (line[index] != '\n' && line[index] != '\0')
+        return STRING_ERROR;
+
+    return OK_STRING;
 }
+
