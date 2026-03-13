@@ -69,7 +69,7 @@ Operations1  ArrOperations_opcode_and_funct[] = {
  */
 
 
-int find_opcode_and_funct(char* name, unsigned int* opcode, unsigned int* funct)
+int is_it_an_operation_and_find_opcode_and_funct(char* name, unsigned int* opcode, unsigned int* funct)
 {
 	int i;
 	/* Iterate through the operations array to find a matching command name */
@@ -169,6 +169,13 @@ char* ArrInstructions[NUM_OF_INSTRUCTIONS] = {
 	".string",".data",".extern" , ".entry",
 };
 
+/**
+ * Checks if a given string is a valid assembly instruction (directive).
+ * The function compares the given string against the array of legal
+ * instructions (e.g., ".data", ".string", ".entry", ".extern").
+ * * @param name A pointer to the string representing the word to be checked.
+ * @return OK_INSTRUCTION (1) if it is a valid instruction, INSTRUCTION_ERROR (0) otherwise.
+ */
 int is_it_an_instruction(char* name)
 {
 	int i;
@@ -317,7 +324,7 @@ int what_is_the_addressing_mode( char* argument)
  * @param argument A pointer to the argument string (e.g., "+5", "-12", "42").
  * @return OK_ADDRESSING_MODE_0 (1) if valid, ADDRESSING_MODE_0_ERROR (0) otherwise.
  */
-int is_addressing_mode_0_valid(char* argument)
+int is_valid_integer(char* argument)
 {
 	/* Must initialize to 0 to always start from the first character */
 	int i = 0;
