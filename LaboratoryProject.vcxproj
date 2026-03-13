@@ -124,11 +124,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="LightBits.c" />
+    <ClCompile Include="scan_lines.c" />
     <ClCompile Include="TheMainPart.c" />
     <ClCompile Include="validations.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LightBits.h" />
+    <ClInclude Include="scan_lines.h" />
     <ClInclude Include="validations.h" />
   </ItemGroup>
   <ItemGroup>

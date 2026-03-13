@@ -24,12 +24,18 @@
     <ClCompile Include="TheMainPart.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="scan_lines.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LightBits.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="validations.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scan_lines.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

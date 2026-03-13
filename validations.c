@@ -206,7 +206,7 @@ int is_it_an_instruction(char* name)
 int is_reserved_word(OneMakro* macrosArray, char* name, int totalMacros)
 {
 	unsigned int num;
-	int i; 
+	int i;
 
 	/* Safety check for empty input */
 	if (name == NULL || name[0] == '\0')
@@ -232,6 +232,8 @@ int is_reserved_word(OneMakro* macrosArray, char* name, int totalMacros)
 	}
 	return 0; /* Not a reserved word, potentially a valid label name */
 }
+
+
 
 /**
  * Validates if a string is a legal label name according to assembly rules.
@@ -448,5 +450,11 @@ int is_valid_addressing(char* operation_name, int source_mode, int destination_m
 	}
 	/* The loop finished but the operation name was not found in the array */
 	return TYPE_OF_OPERANDS_ERROR;
+}
+
+int is_it_a_macro(OneMakro* macrosArray, char* name, int totalMacros) 
+{
+	
+	return -1;
 }
 

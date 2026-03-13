@@ -51,3 +51,4 @@ int is_it_a_valid_label(OneMakro* macrosArray, char* name, int totalMacros);
 int is_valid_integer(char* argument);
 int is_addressing_mode_2_valid(OneMakro* macrosArray, char* argument, int totalMacros);
 int is_valid_addressing(char* operation_name, int source_mode, int destination_mode);
+int is_it_a_macro(OneMakro* macrosArray, char* name, int totalMacros);
