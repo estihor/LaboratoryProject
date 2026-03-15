@@ -452,9 +452,3 @@ int is_valid_addressing(char* operation_name, int source_mode, int destination_m
 	return TYPE_OF_OPERANDS_ERROR;
 }
 
-int is_it_a_macro(OneMakro* macrosArray, char* name, int totalMacros) 
-{
-	
-	return -1;
-}
-

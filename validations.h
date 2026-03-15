@@ -1,5 +1,7 @@
 
-
+#ifndef VALIDATIONS_H
+#define VALIDATIONS_H
+#include "Pre_Assembler.h"
 /*
  * This struct defines the structure of a single machine operation.
  * name: The name of the assembly command (e.g., "mov", "add").
@@ -32,11 +34,7 @@ typedef struct
     int arr_destination_operand[4];
 } Operations3;
 
-typedef struct
-{
-    char* Makroname;
-    char* MakroContent;
-} OneMakro;
+
 
  /* * File: operations.h
   * Contains declarations for searching assembly operations.
@@ -52,3 +50,4 @@ int is_valid_integer(char* argument);
 int is_addressing_mode_2_valid(OneMakro* macrosArray, char* argument, int totalMacros);
 int is_valid_addressing(char* operation_name, int source_mode, int destination_mode);
 int is_it_a_macro(OneMakro* macrosArray, char* name, int totalMacros);
+#endif

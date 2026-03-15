@@ -27,6 +27,9 @@
     <ClCompile Include="scan_lines.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Pre_Assembler.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LightBits.h">
@@ -36,6 +39,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="scan_lines.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Pre_Assembler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
