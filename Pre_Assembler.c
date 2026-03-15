@@ -46,7 +46,7 @@ void Creates_the_file_am(OneMakro* macrosArray, int total_macros_found, FILE* as
 {
     int InMacro = 0;
     int macroIndex;
-    char IsITAMakroWord[82] = { 0 };
+    char IsITAMakroWord[82] = {0};
     char line[82];
     /* Reset the read pointer to the beginning of the source file */
     rewind(asFile);
@@ -162,18 +162,18 @@ FILE* create_asEnding_Tofile(char* baseFileName)
  * * @param baseFileName The base name of the file (without extension).
  * @return A file pointer to the created ".am" file, or NULL if it fails.
  */
-FILE* create_amEnding_Tofile(char* baseFileName)
+FILE* create_amEnding_Tofile(char* baseFileName, char* mode)
 {
     int len1;
     FILE* pointerNewF;
     char newfilename[FILENAME_MAX];
     strcpy(newfilename, baseFileName);
-    len1 = (int)strlen(newfilename);
+    len1 =(int)strlen(newfilename);
     newfilename[len1] = '.';
     newfilename[len1 + 1] = 'a';
     newfilename[len1 + 2] = 'm';
     newfilename[len1 + 3] = '\0';
-    pointerNewF = fopen(newfilename, "w");
+    pointerNewF = fopen(newfilename, mode);
     return pointerNewF;
 
 }
@@ -209,48 +209,48 @@ void adding_lines_of_macro_to_arr(OneMakro* currentMacroArr, char* line)
 OneMakro* Macro_word_search(FILE* asFile, int* MacroCountRequiredForLoop)
 {
     char line[82];          /* Buffer to store the current line being read */
-    char IsITAMakroWord[82] = { 0 }; /* Buffer to extract the first word of the line */
-    char makroName[82] = { 0 };     /* Buffer to store the extracted macro name */
+    char IsITAMakroWord[82] = {0}; /* Buffer to extract the first word of the line */
+    char makroName[82] = {0};     /* Buffer to store the extracted macro name */
     OneMakro* macro_array = NULL;
     int macroCounter = 0;
     int insideMacro = 0; /* Flag indicating if we are currently inside a macro definition */
     unsigned int opcode;/*For the function find_opcode_and_funct */
     unsigned int funct; /* For the function find_opcode_and_funct */
-    /* Read the file line by line until the end */
-    while (fgets(line, sizeof(line), asFile) != NULL)
-    {   /* Attempt to extract the first word from the line */
-        if (sscanf(line, "%s", IsITAMakroWord) == 1)
-        {   /* Case 1: Found the start of a new macro definition */
-            if (insideMacro == 0 && strcmp(IsITAMakroWord, "mcro") == 0)
-            {
-                (void)sscanf(line, "mcro %s", makroName);
-                /* Validate that the macro name is not a reserved word (register/instruction)
-                   and that there is no trailing garbage after the name */
-                if (is_it_a_register(makroName) == 0 && is_it_an_instruction(makroName) == 0
-                    && is_it_an_operation_and_find_opcode_and_funct(makroName, &opcode, &funct) == 0 && No_word_after_macro(line, 2) == 1)
+        /* Read the file line by line until the end */
+        while (fgets(line, sizeof(line), asFile) != NULL)
+        {   /* Attempt to extract the first word from the line */
+            if (sscanf(line, "%s", IsITAMakroWord) == 1)
+            {   /* Case 1: Found the start of a new macro definition */
+                if (insideMacro == 0 && strcmp(IsITAMakroWord, "mcro") == 0)
                 {
-                    /* Allocate memory for the new macro and update the counter */
-                    Inserting_a_macro_into_an_array(makroName, &macroCounter, &macro_array);
-                    insideMacro = 1;/* Turn on the macro flag */
+                   (void) sscanf(line, "mcro %s", makroName);
+                    /* Validate that the macro name is not a reserved word (register/instruction)
+                       and that there is no trailing garbage after the name */
+                    if (is_it_a_register(makroName) == 0 && is_it_an_instruction(makroName) == 0
+                        && is_it_an_operation_and_find_opcode_and_funct(makroName, &opcode, &funct) == 0 && No_word_after_macro(line, 2) == 1)
+                    {
+                        /* Allocate memory for the new macro and update the counter */
+                        Inserting_a_macro_into_an_array(makroName, &macroCounter, &macro_array);
+                        insideMacro = 1;/* Turn on the macro flag */
+                        continue;
+                    }
+                }
+                /* Case 2: Found the end of the current macro definition */
+                if (insideMacro == 1 && strcmp(IsITAMakroWord, "endmcro") == 0)
+                {
+                    insideMacro = 0; /* מעדכנים דגל שיצאנו */
                     continue;
                 }
-            }
-            /* Case 2: Found the end of the current macro definition */
-            if (insideMacro == 1 && strcmp(IsITAMakroWord, "endmcro") == 0)
-            {
-                insideMacro = 0; /* מעדכנים דגל שיצאנו */
-                continue;
-            }
-            /* Case 3: We are inside a valid macro, so add the line to its content */
-            if (insideMacro == 1)
-            {
-                /* Send the address of the last created macro struct to append the line */
-                adding_lines_of_macro_to_arr(&(macro_array[macroCounter - 1]), line);
+                /* Case 3: We are inside a valid macro, so add the line to its content */
+                if (insideMacro == 1)
+                {
+                    /* Send the address of the last created macro struct to append the line */
+                    adding_lines_of_macro_to_arr(&(macro_array[macroCounter - 1]), line);
+                }
             }
         }
-    }
     *MacroCountRequiredForLoop = macroCounter; /* Return the total number of valid macros found to the main function */
-    return macro_array;
+        return macro_array;
 }
 /*
  * Allocates and initializes memory for a newly found macro in the dynamic array.
@@ -262,8 +262,8 @@ OneMakro* Macro_word_search(FILE* asFile, int* MacroCountRequiredForLoop)
 void Inserting_a_macro_into_an_array(char* makroName, int* count, OneMakro** arr)
 {
     (*count)++; /* Increment the array size counter */
-    /* Reallocate memory for the main array to fit the new macro struct */
-    OneMakro* temp = (OneMakro*)realloc(*arr, (*count) * sizeof(OneMakro));
+        /* Reallocate memory for the main array to fit the new macro struct */
+        OneMakro * temp = (OneMakro*)realloc(*arr, (*count) * sizeof(OneMakro));
     if (temp == NULL)
     {
         printf("An attempt to allocate memory failed");

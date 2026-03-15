@@ -1,6 +1,5 @@
 
-#ifndef VALIDATIONS_H
-#define VALIDATIONS_H
+
 #include "Pre_Assembler.h"
 /*
  * This struct defines the structure of a single machine operation.
@@ -50,4 +49,3 @@ int is_valid_integer(char* argument);
 int is_addressing_mode_2_valid(OneMakro* macrosArray, char* argument, int totalMacros);
 int is_valid_addressing(char* operation_name, int source_mode, int destination_mode);
 int is_it_a_macro(OneMakro* macrosArray, char* name, int totalMacros);
-#endif

@@ -1,8 +1,10 @@
 #include "Pre_Assembler.h"
+#include "first_pass.h"
 int main(int argc, char* argv[])
 {
     FILE* asFile;
     FILE* amFile;
+    FILE* amFileForFirstPass;
     int i;
     OneMakro* macrosArray;
     int total_macros_found;
@@ -18,7 +20,7 @@ int main(int argc, char* argv[])
         total_macros_found = 0;/* Reset the macro counter for each new file */
         /* Open the source (.as) and target (.am) files */
         asFile = create_asEnding_Tofile(argv[i]);
-        amFile = create_amEnding_Tofile(argv[i]);
+        amFile = create_amEnding_Tofile(argv[i],"w");
         /* Safety check: ensure both files were opened successfully */
         if (asFile == NULL || amFile == NULL)
         {
@@ -31,6 +33,19 @@ int main(int argc, char* argv[])
         Creates_the_file_am(macrosArray, total_macros_found, asFile, amFile);
         fclose(asFile);
         fclose(amFile);
+
+        /* Re-open the newly created .am file, this time for reading ("r") */
+        amFileForFirstPass = create_amEnding_Tofile(argv[i], "r");
+
+        if (amFileForFirstPass != NULL)
+        {
+            /* Run the first pass analysis using the expanded file and the macro table */
+            first_pass(amFileForFirstPass, macrosArray, total_macros_found);
+
+            /* Close the file after scanning */
+            fclose(amFileForFirstPass);
+        }
+
 
         /* Free all dynamically allocated memory for the current file */
         Release_the_macrosArray(macrosArray, total_macros_found);

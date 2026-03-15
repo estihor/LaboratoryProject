@@ -8,7 +8,7 @@ typedef struct
 } OneMakro;
 
 FILE* create_asEnding_Tofile(char* baseFileName);
-FILE* create_amEnding_Tofile(char* baseFileName);
+FILE* create_amEnding_Tofile(char* baseFileName, char* mode);
 OneMakro* Macro_word_search(FILE* asFile, int* MacroCountRequiredForLoop);
 void Creates_the_file_am(OneMakro* macrosArray, int total_macros_found, FILE* asFile, FILE* amFile);
 void Inserting_a_macro_into_an_array(char* makroName, int* count, OneMakro** arr);
