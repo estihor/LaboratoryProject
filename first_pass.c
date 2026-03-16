@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 /*
  * File: first_pass.c
  * Purpose: Implements the first pass of the assembly process.
@@ -21,15 +22,39 @@ void first_pass(FILE* amFile, OneMakro* macrosArray, int total_macros_found)
     char line[82];    /* Buffer for reading lines (max 80 chars + \n + \0) */
     int IC = 100;     /* Instruction Counter - starts at address 100 */
     int DC = 0;       /* Data Counter - tracks data storage (.data, .string) */
+    int index;
+    char the_first_word[82] = {0};
+    char the_seconed_word[82] = { 0 };
+    int label_flag = 0;
+    int length;
 
     /* Read the file line by line until EOF */
     while (fgets(line, sizeof(line), amFile) != NULL)
     {
-        /* * Logic will be implemented here:
-         * 1. Skip leading whitespaces.
-         * 2. Identify and validate labels.
-         * 3. Distinguish between directives (.data) and instructions (mov).
-         * 4. Update IC and DC accordingly.
-         */
+        index= skip_the_spaces(line, 0);
+        if (line[index] == '\n' || line[index] == '\0' || line[index] == ';')
+        {
+            continue; /* מדלגים על שאר הלולאה ועוברים מיד לשורה הבאה בקובץ! */
+        }
+        index= cut_the_next_word(line, index, the_first_word);
+        length =(int)strlen(the_first_word);
+        if (length > 0 && the_first_word[length - 1] == ':')
+        { 
+            if (is_it_a_valid_label(macrosArray, the_first_word, total_macros_found) == 1)
+            {
+                label_flag = 1;
+                index = skip_the_spaces(line, 0);
+                index = cut_the_next_word(line, index, the_seconed_word);
+
+                if (strcmp(the_seconed_word, ".data") == 0 || strcmp(the_seconed_word, ".string") == 0)
+
+                {
+
+                }
+                  
+            }
+        }
+
+
     }
 }

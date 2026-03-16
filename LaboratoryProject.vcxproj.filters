@@ -33,6 +33,9 @@
     <ClCompile Include="first_pass.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="memory_manager.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LightBits.h">
@@ -48,6 +51,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="first_pass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="memory_manager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
