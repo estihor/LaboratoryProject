@@ -8,11 +8,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include "memory_manager.h"
+#define OK_LABEL  1
 
- /* * Global pointers to the dynamic arrays.
-  * These are "private" to this file (static-like behavior).
+#define LABLE_ERROR  0
+
+ /* * Internal dynamic arrays.
+  * These pointers store the base addresses of our dynamic memory blocks.
   */
-Symbol* symbol_table = NULL;
+label* symbol_table = NULL;
 int symbol_count = 0;
 
 CodeImage* code_image = NULL;
@@ -23,27 +26,25 @@ int data_count = 0;
 
 /* --- Implementation: Add to Symbol Table --- */
 void add_symbol(char* name, int value, int is_code, int is_data, int is_entry, int is_extern) {
-    Symbol* temp;
+    label* temp;
 
-    /* 1. Increase the logical count of symbols */
+    /* 1. Increase the logical count of labels */
     symbol_count++;
 
-    /* 2. Resize the array to fit the new symbol.
-       realloc preserves existing data and allocates a new block if necessary. */
-    temp = (Symbol*)realloc(symbol_table, symbol_count * sizeof(Symbol));
+    /* 2. Resize the array to fit the new label structure using realloc */
+    temp = (label*)realloc(symbol_table, symbol_count * sizeof(label));
 
-    /* 3. Safety check: If realloc fails, it returns NULL. We must exit to prevent crashes. */
+    /* 3. Memory safety check */
     if (temp == NULL) {
         printf("Fatal Error: Memory allocation failed (Symbol Table)\n");
         exit(1);
     }
 
-    /* 4. Update the global pointer to the new (possibly moved) memory address */
     symbol_table = temp;
 
-    /* 5. Fill the last slot in the array (index is count - 1) with the provided data */
-    strcpy(symbol_table[symbol_count - 1].name, name);
-    symbol_table[symbol_count - 1].value = value;
+    /* 4. Populate the new label entry using the updated field names: labelName and labelAddress */
+    strcpy(symbol_table[symbol_count - 1].labelName, name);
+    symbol_table[symbol_count - 1].labelAddress = value;
     symbol_table[symbol_count - 1].is_code = is_code;
     symbol_table[symbol_count - 1].is_data = is_data;
     symbol_table[symbol_count - 1].is_entry = is_entry;
@@ -51,13 +52,13 @@ void add_symbol(char* name, int value, int is_code, int is_data, int is_entry, i
 }
 
 /* --- Implementation: Add to Code Image --- */
-void add_code_word(int address, unsigned short code, char* label, int line) {
+void add_code_word(int address, unsigned short code, char* label_name, int line) {
     CodeImage* temp;
 
-    /* 1. Increase the count of machine words in the code image */
+    /* 1. Increase the count of machine instructions */
     code_count++;
 
-    /* 2. Expand the dynamic array to accommodate the new machine word structure */
+    /* 2. Expand the code image array */
     temp = (CodeImage*)realloc(code_image, code_count * sizeof(CodeImage));
 
     if (temp == NULL) {
@@ -67,15 +68,14 @@ void add_code_word(int address, unsigned short code, char* label, int line) {
 
     code_image = temp;
 
-    /* 3. Populate the new entry's fields */
+    /* 3. Populate the entry with updated field names */
     code_image[code_count - 1].Memory_address = address;
     code_image[code_count - 1].machine_code = code;
     code_image[code_count - 1].the_line_of_the_label = line;
 
-    /* 4. If a label name was provided (unresolved symbol), copy it for the second pass.
-       Otherwise, initialize it as an empty string to avoid junk data. */
-    if (label != NULL) {
-        strcpy(code_image[code_count - 1].missing_label, label);
+    /* 4. Handle unresolved labels for the Second Pass */
+    if (label_name != NULL) {
+        strcpy(code_image[code_count - 1].missing_label, label_name);
     }
     else {
         code_image[code_count - 1].missing_label[0] = '\0';
@@ -86,10 +86,10 @@ void add_code_word(int address, unsigned short code, char* label, int line) {
 void add_data_word(int address, unsigned short word) {
     DataImage* temp;
 
-    /* 1. Increase the count of data words (.data or .string values) */
+    /* 1. Increase the count of data words */
     data_count++;
 
-    /* 2. Expand the data array using realloc */
+    /* 2. Expand the data image array */
     temp = (DataImage*)realloc(data_image, data_count * sizeof(DataImage));
 
     if (temp == NULL) {
@@ -99,16 +99,15 @@ void add_data_word(int address, unsigned short word) {
 
     data_image = temp;
 
-    /* 3. Store the address and the binary representation of the data */
-    data_image[data_count - 1].address = address;
-    data_image[data_count - 1].machine_word = word;
+    /* 3. Store data using updated field names: MemoryAddress and machine_code */
+    data_image[data_count - 1].MemoryAddress = address;
+    data_image[data_count - 1].machine_code = word;
 }
 
 /* --- Implementation: Free all memory --- */
 void free_all_memory() {
-    /* * For each dynamic array, we check if it was allocated (not NULL),
-     * free the memory block, and then reset the pointer and counter
-     * to ensure the manager is ready for a fresh start (e.g., next file).
+    /* * Safely release all allocated memory and reset pointers to NULL.
+     * This prevents memory leaks and "dangling pointers".
      */
     if (symbol_table != NULL) {
         free(symbol_table);
@@ -127,4 +126,15 @@ void free_all_memory() {
         data_image = NULL;
         data_count = 0;
     }
+}
+
+int is_label_exists(char* search_name)
+{
+    int i; 
+    for (i = 0; i < symbol_count; i++)
+    {
+        if (strcmp(symbol_table[i].labelName, search_name)==0)
+            return LABLE_ERROR;
+    }
+    return OK_LABEL;
 }

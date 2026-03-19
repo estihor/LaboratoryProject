@@ -9,13 +9,13 @@
 
  /* --- 1. Symbol Table Structure --- */
 typedef struct {
-    char name[32];      /* Symbol name */
-    int value;          /* Address value (IC or DC) */
+    char labelName[32];      /* Symbol name */
+    int  labelAddress;          /* Address value (IC or DC) */
     int is_code;        /* Flag: 1 if it's a code instruction */
     int is_data;        /* Flag: 1 if it's a data directive */
     int is_entry;       /* Flag: 1 if defined as .entry */
     int is_extern;      /* Flag: 1 if defined as .extern */
-} Symbol;
+} label;
 
 /* --- 2. Code Image Structure --- */
 typedef struct {
@@ -27,8 +27,8 @@ typedef struct {
 
 /* --- 3. Data Image Structure --- */
 typedef struct {
-    int address;                  /* Memory address (DC) */
-    unsigned short machine_word;  /* The 16-bit binary data word */
+    int MemoryAddress;                  /* Memory address (DC) */
+    unsigned short machine_code;  /* The 16-bit binary data word */
 } DataImage;
 
 /* --- Function Prototypes --- */
@@ -41,5 +41,6 @@ void add_code_word(int address, unsigned short code, char* label, int line);
 void add_data_word(int address, unsigned short word);
 /* Frees all dynamically allocated memory */
 void free_all_memory();
+int is_label_exists(char* search_name);
 
 #endif
