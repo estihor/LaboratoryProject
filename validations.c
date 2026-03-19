@@ -248,7 +248,7 @@ int is_reserved_word(OneMakro* macrosArray, char* name, int totalMacros)
  * @param totalMacros Number of macros currently in the system.
  * @return OK_LABEL (1) if valid, LABEL_ERROR (0) otherwise.
  */
-int is_it_a_valid_label(OneMakro* macrosArray, char* name, int total_macros_found)
+int is_it_a_valid_label(OneMakro* macrosArray, char* name, int totalMacros)
 {
 	int i, len;
 
@@ -257,7 +257,7 @@ int is_it_a_valid_label(OneMakro* macrosArray, char* name, int total_macros_foun
 		return LABEL_ERROR;
 
 	/* Ensure the name isn't already taken by a register, command, or macro */
-	if (is_reserved_word(macrosArray, name, total_macros_found))
+	if (is_reserved_word(macrosArray, name, totalMacros))
 		return LABEL_ERROR;
 
 	/* 1. Check length: A label name cannot exceed 31 characters */
