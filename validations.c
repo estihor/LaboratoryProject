@@ -7,7 +7,7 @@
 #define OK_REGISTER 1
 #define OK_INSTRUCTION 1
 #define OK_LABEL 1
-#define OK_ADDRESSING_MODE_0 1
+#define OK_INTEGER 1
 #define OK_ADDRESSING_MODE_2 1
 #define OK_TYPE_OF_OPERANDS 1
 
@@ -18,7 +18,7 @@
 #define INSTRUCTION_ERROR 0
 #define LABEL_ERROR 0
 #define MACRO_ERROR -1
-#define ADDRESSING_MODE_0_ERROR 0
+#define INTEGER_ERROR 0
 #define ADDRESSING_MODE_2_ERROR 0
 #define TYPE_OF_OPERANDS_ERROR 0
 #define NO_OPERAND -1
@@ -333,7 +333,7 @@ int is_valid_integer(char* argument)
 
 	/*  safety check before accessing the string */
 	if (argument == NULL || argument[0] == '\0')
-		return ADDRESSING_MODE_0_ERROR;
+		return INTEGER_ERROR;
 
 	/*  Check for an optional '+' or '-' sign. If found, advance 'i' */
 	if (argument[0] == '+' || argument[0] == '-')
@@ -341,7 +341,7 @@ int is_valid_integer(char* argument)
 
 	/*  Edge case check: return an error if there is ONLY a sign without numbers */
 	if (argument[i] == '\0')
-		return ADDRESSING_MODE_0_ERROR;
+		return INTEGER_ERROR;
 
 	/*  Iterate over the remaining characters.
 	 * Loop initialization is omitted so 'i' continues from its current position! */
@@ -349,11 +349,11 @@ int is_valid_integer(char* argument)
 	{
 		/* If the current character is not between '0' and '9', it's invalid */
 		if (argument[i] < '0' || argument[i] > '9')
-			return ADDRESSING_MODE_0_ERROR;
+			return INTEGER_ERROR;
 	}
 
 	/*  If we passed the entire loop without returning an error - it's a valid number! */
-	return OK_ADDRESSING_MODE_0;
+	return OK_INTEGER;
 }
 
 

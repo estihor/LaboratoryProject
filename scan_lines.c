@@ -1,11 +1,11 @@
 #include<string.h>
 #include"scan_lines.h"
 
+
 #define OK_STRING 1
-#define OK_COMMA 1
+
 
 #define STRING_ERROR 0
-#define COMMA_ERROR 0
 
 /**
  * Skips white spaces (spaces and tabs) in a given string starting from a specific index.

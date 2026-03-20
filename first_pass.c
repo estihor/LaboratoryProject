@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h> 
 #include "first_pass.h"
 #include "validations.h"
 #include "scan_lines.h"
@@ -21,9 +22,12 @@
 #define OK_REGISTER 1
 #define OK_INSTRUCTION 1
 #define OK_LABEL 1
-#define OK_ADDRESSING_MODE_0 1
+#define OK_INTEGER 1
 #define OK_ADDRESSING_MODE_2 1
 #define OK_TYPE_OF_OPERANDS 1
+#define OK_DATA 1
+
+
 
 
 #define OPERATION_ERROR 0
@@ -32,10 +36,12 @@
 #define INSTRUCTION_ERROR 0
 #define LABEL_ERROR 0
 #define MACRO_ERROR -1
-#define ADDRESSING_MODE_0_ERROR 0
+#define INTEGER_ERROR 0
 #define ADDRESSING_MODE_2_ERROR 0
 #define TYPE_OF_OPERANDS_ERROR 0
 #define NO_OPERAND -1
+#define DATA_ERROR 0
+
 
 
 #define NUM_OF_OPERATIONS 16
@@ -128,6 +134,119 @@ void encode_the_string_into_the_data_image(char* line, int start_index, int* DC)
     (*DC)++;
 }
 
+/**
+ * process_string_directive - Validates and encodes a .string directive.
+ * Checks if the string starts and ends with quotes. If valid, it encodes
+ * the characters into the data image.
+ *
+ * @param line The full line containing the string directive.
+ * @param index The current index in the line (after the ".string" word).
+ * @param DC Pointer to the Data Counter.
+ * @param line_number Current line number for error reporting.
+ * @return OK_STRING if successful, STRING_ERROR if syntax errors exist.
+ */
+int process_of_string(char* line, int index, int* DC, int line_number)
+{
+    /* Step 1: Skip spaces after ".string" */
+    index = skip_the_spaces(line, index);
+
+    /* Step 2: Validate the string format */
+    if (is_str_valid(line, index) != OK_STRING)
+    {
+        /* Print a specific error if validation fails */
+        printf("Error at line %d: Invalid string format.\n", line_number);
+        return STRING_ERROR;
+    }
+
+    /* Step 3: String is valid, encode it to memory */
+    encode_the_string_into_the_data_image(line, index, DC);
+
+    return OK_STRING;
+}
+
+
+/**
+ * process_data_directive - Parses, validates, and encodes a .data directive.
+ * Reads comma-separated integers, converts them to machine code, and increments DC.
+ * Uses flags to avoid 'break' statements, adhering to strict structured programming.
+ *
+ * @param line The full line containing the data directive.
+ * @param index The current index in the line (after the ".data" word).
+ * @param DC Pointer to the Data Counter.
+ * @param line_number Current line number for error reporting.
+ * @return OK_DATA if successful, DATA_ERROR if syntax errors exist.
+ */
+int process_and_encode_data(char* line, int index, int* DC, int line_number)
+{
+    char current_number_str[82] = { 0 };
+    int num_value;
+    int end_of_line = 0; /* Flag to stop the loop gracefully at the end */
+    int error_found = 0; /* Flag to stop the loop if an error occurs */
+
+    /* Step 1: Skip spaces after ".data" */
+    index = skip_the_spaces(line, index);
+
+    /* Check for an empty data directive */
+    if (line[index] == '\n' || line[index] == '\0') {
+        printf("Error at line %d: Missing data parameters.\n", line_number);
+        return DATA_ERROR;
+    }
+
+    /* Step 2: Loop through the line using flags */
+    while (end_of_line == 0 && error_found == 0 && line[index] != '\n' && line[index] != '\0')
+    {
+        /* Extract the number string, stopping at spaces or commas */
+        index = cut_the_next_word(line, index, current_number_str);
+
+        /* Validate the extracted string is a legal integer (e.g., "-5", "12") */
+        if (is_valid_integer(current_number_str) == INTEGER_ERROR) {
+            error_found = 1; /* Turn on error flag to exit loop gracefully */
+        }
+        else
+        {
+            /* Number is valid, encode immediately to memory */
+            num_value = atoi(current_number_str);
+            add_data_word(*DC, num_value);
+            (*DC)++;
+
+            /* Skip spaces after the number to check the next character */
+            index = skip_the_spaces(line, index);
+
+            /* Check if the end of the line is reached */
+            if (line[index] == '\n' || line[index] == '\0') {
+                end_of_line = 1; /* Turn on flag to finish the loop */
+            }
+            else
+            {
+                /* Not at the end, so a comma is expected here */
+                index = check_and_skip_comma(line, index);
+
+                if (index == -1) {
+                    printf("Error at line %d: Missing comma between data parameters.\n", line_number);
+                    error_found = 1;
+                }
+                else
+                {
+                    /* Check for a trailing comma (e.g., "5, 8, \n") */
+                    index = skip_the_spaces(line, index);
+                    if (line[index] == '\n' || line[index] == '\0') {
+                        printf("Error at line %d: Extraneous comma at end of line.\n", line_number);
+                        error_found = 1;
+                    }
+                }
+            }
+        }
+    }
+
+    /* Step 3: Return the final status based on the error flag */
+    if (error_found == 1) {
+        return DATA_ERROR;
+    }
+
+    return OK_DATA;
+}
+
+
  /**
   * first_pass - Scans the .am file to determine instruction and data sizes.
   * @amFile: A pointer to the opened expanded assembly file.
@@ -141,14 +260,14 @@ int first_pass(FILE* amFile, OneMakro* macrosArray, int total_macros_found)
     int IC = 100;                    /* Instruction Counter, starts at 100 */
     int DC = 0;                      /* Data Counter, tracks data storage */
     int line_index = 0;              /* Current index while parsing the line */
-    char the_first_word[82] = { 0 };   /* Stores the first extracted word */
-    char the_seconed_word[82] = { 0 }; /* Stores the second extracted word */
+    char the_first_word[82] = {0};   /* Stores the first extracted word */
+    char the_seconed_word[82] = {0}; /* Stores the second extracted word */
     int error_flag = 0;              /* 1 if errors found, 0 otherwise */
     int first_word_length;                      /* Length of the extracted word */
     int line_number = 1;             /* Tracks the current line number */
     int opcode=0;
     int funct=0;
-
+   
 
 
     /* Read the source file line by line until End-Of-File (EOF) */
@@ -187,26 +306,21 @@ int first_pass(FILE* amFile, OneMakro* macrosArray, int total_macros_found)
                         /* Add the valid label to the symbol table as a data symbol */
                         add_symbol(the_first_word, DC, 0, 1, 0, 0);
                         line_index = skip_the_spaces(line, line_index);
+                        /* Check if it's a string directive */
                         if (strcmp(the_seconed_word, ".string") == 0)
                         {
-                                if (is_str_valid(line, line_index) == OK_STRING)
-                                {
-                                    encode_the_string_into_the_data_image(line, line_index, DC);
-                                }
-                                else
-                                {
-                                    /* פה חשוב להדפיס שגיאה ולהדליק דגל שגיאות! */
-                                    printf("Error at line %d: Invalid string format.\n", line_number);
-                                    error_flag = 1;
-                                }
+                            if (process_of_string(line, line_index, &DC, line_number) == STRING_ERROR) 
+                            {
+                                error_flag = 1;
+                            }
                         }
+                        /* Check if it's a data directive */
                         else if (strcmp(the_seconed_word, ".data") == 0)
                         {
-                            while (line_index != '\0')
+                            if (process_and_encode_data(line, line_index, &DC, line_number) == DATA_ERROR) 
                             {
-
+                                error_flag = 1;
                             }
-                            
                         }
                     }
                     
