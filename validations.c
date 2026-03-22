@@ -452,3 +452,59 @@ int is_valid_addressing(char* operation_name, int source_mode, int destination_m
 	return TYPE_OF_OPERANDS_ERROR;
 }
 
+#define VALID_OPERAND 1
+#define INVALID_OPERAND 0
+
+/**
+ * validate_operand_by_mode - Validates the syntax of an operand based on its addressing mode.
+ * Routes the operand to the appropriate validation function (integer, label, relative, or register).
+ *
+ * @param operand The string representing the operand to validate.
+ * @param mode The addressing mode of the operand (0, 1, 2, or 3).
+ * @param macrosArray Pointer to the array of defined macros (for label validation).
+ * @param total_macros The total number of macros currently defined.
+ * @return VALID_OPERAND (1) if the operand is perfectly valid, INVALID_OPERAND (0) if there is a syntax error.
+ */
+int validate_operand_by_mode(char* operand, int mode, OneMakro* macrosArray, int total_macros)
+{
+	if (mode == ADDRESSING_MODE_0)
+	{
+		/* Skip the '#' character by passing operand + 1 */
+		if (is_valid_integer(operand + 1) == INTEGER_ERROR)
+		{
+			return INVALID_OPERAND; /* Return 0 if it's not a valid number */
+		}
+	}
+	else if (mode == ADDRESSING_MODE_1)
+	{
+		/* Check if it's a valid label syntax */
+		if (is_it_a_valid_label(macrosArray, operand, total_macros) == LABEL_ERROR)
+		{
+			return INVALID_OPERAND;
+		}
+	}
+	else if (mode == ADDRESSING_MODE_2)
+	{
+		/* Check if it's a valid relative mode syntax (e.g., %LOOP) */
+		if (is_addressing_mode_2_valid(macrosArray, operand, total_macros) == ADDRESSING_MODE_2_ERROR)
+		{
+			return INVALID_OPERAND;
+		}
+	}
+	else if (mode == ADDRESSING_MODE_3)
+	{
+		/* Check if it's a valid register (e.g., r1) */
+		if (is_it_a_register(operand) == REGISTER_ERROR)
+		{
+			return INVALID_OPERAND;
+		}
+	}
+	else
+	{
+		/* Safety net: If the mode is none of the above (e.g., -1) */
+		return INVALID_OPERAND;
+	}
+
+	/* If we passed all the checks without returning an error, the operand is valid! */
+	return VALID_OPERAND;
+}
