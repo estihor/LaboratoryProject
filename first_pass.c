@@ -6,6 +6,15 @@
  * Scans the .am file, populates the symbol table, and calculates IC & DC.
  */
 
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h> 
+#include "first_pass.h"
+#include "validations.h"
+#include "scan_lines.h"
+#include "memory_manager.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h> 
@@ -16,7 +25,6 @@
 
 
  /* Constants to avoid magic numbers */
-/* Constants to avoid magic numbers */
 #define OK_OPERATION 1
 #define OK_OPERANDS 1
 #define OK_REGISTER 1
@@ -61,6 +69,14 @@
 
 #define STRING_ERROR 0
 #define COMMA_ERROR 0
+
+#define OK_EXTERN 1
+#define EXTERN_ERROR 0
+
+#define OK_ENTRY 1
+#define ENTRY_ERROR 0
+
+
 
 
 
@@ -129,7 +145,7 @@ void encode_the_string_into_the_data_image(char* line, int start_index, int* DC)
     /* Assembly requirement: Always append a null terminator ('\0' / ASCII 0)
      * at the end of every string stored in memory. */
     add_data_word(*DC, 0);
-
+    
     /* Increment DC one last time for the null terminator */
     (*DC)++;
 }
@@ -247,32 +263,139 @@ int process_and_encode_data(char* line, int index, int* DC, int line_number)
 }
 
 
- /**
-  * first_pass - Scans the .am file to determine instruction and data sizes.
-  * @amFile: A pointer to the opened expanded assembly file.
-  * @macrosArray: The table of macros.
-  * @total_macros_found: Total count of macros in the system.
-  * Returns: 1 if errors were found, 0 if clean.
-  */
+
+/**
+ * process_extern_directive - Handles the .extern directive in the first pass.
+ * Prints a warning if a label precedes the directive. Extracts the operand,
+ * validates its syntax, and inserts it into the symbol table as an external symbol.
+ * Detects missing operands or extraneous text after the operand.
+ *
+ * @param line The full line containing the directive.
+ * @param index The current index in the line (after the ".extern" word).
+ * @param label_flag Indicates if a label was defined at the start of the line.
+ * @param line_number Current line number for error reporting.
+ * @param macrosArray The array of macros to check against reserved words.
+ * @param total_macros_found The total number of macros currently defined.
+ * @return OK_EXTERN if successful, EXTERN_ERROR if syntax errors exist.
+ */
+int process_of_extern(char* line, int index, int label_flag, int line_number, OneMakro* macrosArray, int total_macros_found)
+{
+    char the_operand[82] = { 0 };
+
+    /* A label before .extern is meaningless; print a warning but continue */
+    if (label_flag == 1)
+    {
+        printf("Warning at line %d: Label before .extern is ignored\n", line_number);
+    }
+
+    /* Extract the external label name */
+    index = skip_the_spaces(line, index);
+    index = cut_the_next_word(line, index, the_operand);
+
+    /* Check for missing operand */
+    if (strlen(the_operand) == 0)
+    {
+        printf("Error at line %d: Missing operand after .extern directive\n", line_number);
+        return EXTERN_ERROR;
+    }
+
+    /* Validate the operand label syntax and check that it doesn't already exist */
+    if (check_label_validity(the_operand, macrosArray, total_macros_found, line_number) == 1)
+    {
+        return EXTERN_ERROR;
+    }
+
+    /* Insert the valid external label into the symbol table */
+    add_symbol(the_operand, 0, 0, 0, 0, 1);
+
+    /* Check for extraneous text after the operand */
+    index = skip_the_spaces(line, index);
+    if (line[index] != '\n' && line[index] != '\0')
+    {
+        printf("Error at line %d: Extraneous text after .extern operand\n", line_number);
+        return EXTERN_ERROR;
+    }
+
+    return OK_EXTERN;
+}
+
+
+/**
+ * process_entry_directive - Handles the .entry directive in the first pass.
+ * Prints a warning if a label precedes the directive. Extracts the operand
+ * and validates its syntax. Does not insert into the symbol table in the first pass.
+ * Detects missing operands or extraneous text after the operand.
+ *
+ * @param line The full line containing the directive.
+ * @param index The current index in the line (after the ".entry" word).
+ * @param label_flag Indicates if a label was defined at the start of the line.
+ * @param line_number Current line number for error reporting.
+ * @param macrosArray The array of macros to check against reserved words.
+ * @param total_macros_found The total number of macros currently defined.
+ * @return OK_ENTRY if successful, ENTRY_ERROR if syntax errors exist.
+ */
+int process_of_entry(char* line, int index, int label_flag, int line_number, OneMakro* macrosArray, int total_macros_found)
+{
+    char the_operand[82] = { 0 };
+
+    /* A label before .entry is meaningless; print a warning but continue */
+    if (label_flag == 1)
+    {
+        printf("Warning at line %d: Label before .entry is ignored\n", line_number);
+    }
+
+    /* Extract the entry label name */
+    index = skip_the_spaces(line, index);
+    index = cut_the_next_word(line, index, the_operand);
+
+    /* Check for missing operand */
+    if (strlen(the_operand) == 0)
+    {
+        printf("Error at line %d: Missing operand after .entry directive\n", line_number);
+        return ENTRY_ERROR;
+    }
+
+    /* Validate the operand label syntax ONLY (do not check if it already exists) */
+    if (is_it_a_valid_label(macrosArray, the_operand, total_macros_found) != OK_LABEL)
+    {
+        printf("Error at line %d: Invalid label syntax '%s' for .entry\n", line_number, the_operand);
+        return ENTRY_ERROR;
+    }
+
+    /* Check for extraneous text after the operand */
+    index = skip_the_spaces(line, index);
+    if (line[index] != '\n' && line[index] != '\0')
+    {
+        printf("Error at line %d: Extraneous text after .entry operand\n", line_number);
+        return ENTRY_ERROR;
+    }
+
+    return OK_ENTRY;
+}
+
+
+
 int first_pass(FILE* amFile, OneMakro* macrosArray, int total_macros_found)
 {
     char line[82];                   /* Buffer for reading the current line */
     int IC = 100;                    /* Instruction Counter, starts at 100 */
     int DC = 0;                      /* Data Counter, tracks data storage */
     int line_index = 0;              /* Current index while parsing the line */
-    char the_first_word[82] = {0};   /* Stores the first extracted word */
-    char the_seconed_word[82] = {0}; /* Stores the second extracted word */
+    char the_first_word[82] = { 0 };   /* Stores the first extracted word */
+    char the_instruction[82] = { 0 }; /* Stores the second extracted word */
+    char the_operand[82] = { 0 };
     int error_flag = 0;              /* 1 if errors found, 0 otherwise */
+    int label_flag;
     int first_word_length;                      /* Length of the extracted word */
     int line_number = 1;             /* Tracks the current line number */
-    int opcode=0;
-    int funct=0;
-   
+    int opcode = 0;
+    int funct = 0;
 
 
     /* Read the source file line by line until End-Of-File (EOF) */
     while ((fgets(line, sizeof(line), amFile) != NULL))
     {
+        label_flag = 0;
         /* Skip leading spaces to find the first meaningful character */
         line_index = skip_the_spaces(line, 0);
 
@@ -283,9 +406,11 @@ int first_pass(FILE* amFile, OneMakro* macrosArray, int total_macros_found)
             line_index = cut_the_next_word(line, line_index, the_first_word);
             first_word_length = (int)strlen(the_first_word);
 
+
             /* Check if the first word is a label definition (ends with a colon) */
             if (first_word_length > 0 && the_first_word[first_word_length - 1] == ':')
             {
+
                 /* Remove the colon ':' to check the actual label name */
                 the_first_word[first_word_length - 1] = '\0';
 
@@ -296,42 +421,74 @@ int first_pass(FILE* amFile, OneMakro* macrosArray, int total_macros_found)
                 }
                 else
                 {
-                    /* The label is valid and new. Move to the next word in the line */
-                    line_index = skip_the_spaces(line, line_index);
-                    line_index = cut_the_next_word(line, line_index, the_seconed_word);
+                    label_flag = 1;
 
-                    /* Check if the second word is a data or string directive */
-                    if (strcmp(the_seconed_word, ".data") == 0 || strcmp(the_seconed_word, ".string") == 0)
-                    {
-                        /* Add the valid label to the symbol table as a data symbol */
-                        add_symbol(the_first_word, DC, 0, 1, 0, 0);
-                        line_index = skip_the_spaces(line, line_index);
-                        /* Check if it's a string directive */
-                        if (strcmp(the_seconed_word, ".string") == 0)
-                        {
-                            if (process_of_string(line, line_index, &DC, line_number) == STRING_ERROR) 
-                            {
-                                error_flag = 1;
-                            }
-                        }
-                        /* Check if it's a data directive */
-                        else if (strcmp(the_seconed_word, ".data") == 0)
-                        {
-                            if (process_and_encode_data(line, line_index, &DC, line_number) == DATA_ERROR) 
-                            {
-                                error_flag = 1;
-                            }
-                        }
-                    }
-                    
+                }
+                /* The label is valid and new. Move to the next word in the line */
+                line_index = skip_the_spaces(line, line_index);
+                line_index = cut_the_next_word(line, line_index, the_instruction);
+
+            }
+            else
+            {
+                /* רק אם לא היו נקודתיים בכלל, אז המילה הראשונה היא הפקודה שלנו! */
+                strcpy(the_instruction, the_first_word);
+            }
+
+
+            if (strcmp(the_instruction, ".string") == 0)
+            {
+                /* Add the valid label to the symbol table as a data symbol */
+                if (label_flag == 1)
+                {
+                    add_symbol(the_first_word, DC, 0, 1, 0, 0);
+                }
+                line_index = skip_the_spaces(line, line_index);
+
+                if (process_of_string(line, line_index, &DC, line_number) == STRING_ERROR)
+                {
+                    error_flag = 1;
                 }
             }
-        }
 
+            /* Check if it's a data directive */
+            else if (strcmp(the_instruction, ".data") == 0)
+            {
+                /* Add the valid label to the symbol table as a data symbol */
+                if (label_flag == 1)
+                {
+                    add_symbol(the_first_word, DC, 0, 1, 0, 0);
+                }
+                line_index = skip_the_spaces(line, line_index);
+
+                if (process_and_encode_data(line, line_index, &DC, line_number) == DATA_ERROR)
+                {
+                    error_flag = 1;
+                }
+            }
+            else if (strcmp(the_instruction, ".extern") == 0)
+            {
+                if (process_of_extern(line, line_index, label_flag, line_number, macrosArray, total_macros_found) == EXTERN_ERROR)
+                {
+                    error_flag = 1;
+                }
+            }
+            else if (strcmp(the_instruction, ".entry") == 0)
+            {
+                if (process_of_entry(line, line_index, label_flag, line_number, macrosArray, total_macros_found) == ENTRY_ERROR)
+                {
+                    error_flag = 1;
+                }
+            }
+            else
+            {
+
+
+            }
+        }
         /* Increment line counter before reading the next line */
         line_number++;
     }
-
     /* Return the final status to the main function */
     return error_flag;
 }

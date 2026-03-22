@@ -124,6 +124,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="first_pass.c" />
+    <ClCompile Include="help.c" />
     <ClCompile Include="LightBits.c" />
     <ClCompile Include="memory_manager.c" />
     <ClCompile Include="Pre_Assembler.c" />

@@ -36,6 +36,9 @@
     <ClCompile Include="memory_manager.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="help.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LightBits.h">

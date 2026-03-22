@@ -1,5 +1,4 @@
-
-
+#pragma once
 #include "Pre_Assembler.h"
 /*
  * This struct defines the structure of a single machine operation.
