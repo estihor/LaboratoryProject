@@ -14,14 +14,8 @@
 #include "validations.h"
 #include "scan_lines.h"
 #include "memory_manager.h"
+#include "instructions_handler.h"
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h> 
-#include "first_pass.h"
-#include "validations.h"
-#include "scan_lines.h"
-#include "memory_manager.h"
 
 
  /* Constants to avoid magic numbers */
@@ -75,6 +69,10 @@
 
 #define OK_ENTRY 1
 #define ENTRY_ERROR 0
+#define VALID_SYNTAX 1
+#define SYNTAX_ERROR 0
+#define INVALID_OPERAND 0
+
 
 
 
@@ -482,7 +480,7 @@ int first_pass(FILE* amFile, OneMakro* macrosArray, int total_macros_found)
             }
             else
             {
-                if (process_machine_instruction(line, line_index, label_flag, line_number, the_first_word, the_instruction, macrosArray, total_macros_found, IC) == ENTRY_ERROR)
+                if (process_machine_instruction(line, line_index, label_flag, line_number, the_first_word, the_instruction, macrosArray, total_macros_found, &IC) == SYNTAX_ERROR)
                 {
                     error_flag = 1;
                 }

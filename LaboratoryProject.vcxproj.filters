@@ -36,7 +36,7 @@
     <ClCompile Include="memory_manager.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="help.c">
+    <ClCompile Include="instructions_handler.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -57,6 +57,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="memory_manager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="instructions_handler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

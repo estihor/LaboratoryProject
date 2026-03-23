@@ -14,6 +14,7 @@
 #include "scan_lines.h"
 #include "memory_manager.h"
 #include "LightBits.h"
+#include "instructions_handler.h"
 
  /* Constants to avoid magic numbers */
 #define OK_OPERATION 1
@@ -90,7 +91,7 @@ int process_machine_instruction(char* line, int index, int label_flag, int line_
     if (is_it_an_operation_and_find_operands(the_instruction, &num_of_operands) == OPERANDS_ERROR)
     {
         printf("Error at line %d: Invalid operation '%s'\n", line_number, the_instruction);
-        return 1;
+        return 0;
     }
 
     /* 2. Valid operation! If there is a label, add it to the symbol table as CODE */
@@ -109,26 +110,26 @@ int process_machine_instruction(char* line, int index, int label_flag, int line_
         /* We pass IC directly because it is already a pointer */
         if (process_zero_operands(line_number, line, index, opcode, funct, IC) == SYNTAX_ERROR)
         {
-            return 1;
+            return 0;
         }
     }
     else if (num_of_operands == 1)
     {
         if (process_one_operand(line_number, line, index, the_instruction, macrosArray, total_macros_found, opcode, funct, IC) == SYNTAX_ERROR)
         {
-            return 1;
+            return 0;
         }
     }
     else if (num_of_operands == 2)
     {
         if (process_two_operands(line_number, line, index, the_instruction, macrosArray, total_macros_found,  opcode, funct, IC) == SYNTAX_ERROR)
         {
-            return 1;
+            return 0;
         }
     }
 
     /* If we got here, the entire line's syntax is flawless and encoded! */
-    return 0;
+    return 1;
 }
 
 
@@ -144,7 +145,7 @@ int process_machine_instruction(char* line, int index, int label_flag, int line_
  * @param IC Pointer to the Instruction Counter.
  * @return VALID_SYNTAX (1) if successful, SYNTAX_ERROR (0) otherwise.
  */
-int process_zero_operands(int line_number, char* line, int index, short int opcode, short int funct, int* IC)
+int process_zero_operands(int line_number, char* line, int index, unsigned int opcode, unsigned int funct, int* IC)
 {
     index = skip_the_spaces(line, index);
 
@@ -177,7 +178,7 @@ int process_zero_operands(int line_number, char* line, int index, short int opco
  * @param IC Pointer to the Instruction Counter.
  * @return VALID_SYNTAX (1) if successful, SYNTAX_ERROR (0) otherwise.
  */
-int process_one_operand(int line_number, char* line, int index, char* operation_name, OneMakro* macrosArray, int total_macros, short int opcode, short int funct, int* IC)
+int process_one_operand(int line_number, char* line, int index, char* operation_name, OneMakro* macrosArray, int total_macros, unsigned int opcode, unsigned int funct, int* IC)
 {
     char the_operand[82] = { 0 };
     int dest_mode;
@@ -240,7 +241,7 @@ int process_one_operand(int line_number, char* line, int index, char* operation_
  * @param IC Pointer to the Instruction Counter.
  * @return VALID_SYNTAX (1) if successful, SYNTAX_ERROR (0) otherwise.
  */
-int process_two_operands(int line_number, char* line, int index, char* operation_name, OneMakro* macrosArray, int total_macros, short int opcode, short int funct, int* IC)
+int process_two_operands(int line_number, char* line, int index, char* operation_name, OneMakro* macrosArray, int total_macros, unsigned int opcode, unsigned int funct, int* IC)
 {
     char first_operand[82] = { 0 };
     char second_operand[82] = { 0 };

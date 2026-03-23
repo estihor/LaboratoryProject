@@ -124,7 +124,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="first_pass.c" />
-    <ClCompile Include="help.c" />
+    <ClCompile Include="instructions_handler.c" />
     <ClCompile Include="LightBits.c" />
     <ClCompile Include="memory_manager.c" />
     <ClCompile Include="Pre_Assembler.c" />
@@ -134,6 +134,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="first_pass.h" />
+    <ClInclude Include="instructions_handler.h" />
     <ClInclude Include="LightBits.h" />
     <ClInclude Include="memory_manager.h" />
     <ClInclude Include="Pre_Assembler.h" />
