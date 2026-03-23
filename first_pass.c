@@ -482,7 +482,11 @@ int first_pass(FILE* amFile, OneMakro* macrosArray, int total_macros_found)
             }
             else
             {
-
+                if (process_machine_instruction(line, line_index, label_flag, line_number, the_first_word, the_instruction, macrosArray, total_macros_found, IC) == ENTRY_ERROR)
+                {
+                    error_flag = 1;
+                }
+               
 
             }
         }
