@@ -1,5 +1,89 @@
+#define _CRT_SECURE_NO_WARNINGS
+
+/*
+ * File: first_pass.c
+ * Purpose: Implements the first pass of the assembly process.
+ * Scans the .am file, populates the symbol table, and calculates IC & DC.
+ */
+
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h> 
+#include "first_pass.h"
+#include "validations.h"
+#include "scan_lines.h"
+#include "memory_manager.h"
+#include "LightBits.h"
+
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h> 
+#include "first_pass.h"
+#include "validations.h"
+#include "scan_lines.h"
+#include "memory_manager.h"
+
+
+ /* Constants to avoid magic numbers */
+#define OK_OPERATION 1
+#define OK_OPERANDS 1
+#define OK_REGISTER 1
+#define OK_INSTRUCTION 1
+#define OK_LABEL 1
+#define OK_INTEGER 1
+#define OK_ADDRESSING_MODE_2 1
+#define OK_TYPE_OF_OPERANDS 1
+#define OK_DATA 1
+
+
+
+
+#define OPERATION_ERROR 0
+#define OPERANDS_ERROR 0
+#define REGISTER_ERROR 0
+#define INSTRUCTION_ERROR 0
+#define LABEL_ERROR 0
+#define MACRO_ERROR -1
+#define INTEGER_ERROR 0
+#define ADDRESSING_MODE_2_ERROR 0
+#define TYPE_OF_OPERANDS_ERROR 0
+#define NO_OPERAND -1
+#define DATA_ERROR 0
+
+
+
+#define NUM_OF_OPERATIONS 16
+#define NUM_OF_REGISTERS 8
+#define NUM_OF_INSTRUCTIONS 4
+
+
+#define ADDRESSING_MODE_0 0
+#define ADDRESSING_MODE_1 1
+#define ADDRESSING_MODE_2 2
+#define ADDRESSING_MODE_3 3
+#define LABEL_LENGTH 31
+
+
+#define OK_STRING 1
+#define OK_COMMA 1
+
+#define STRING_ERROR 0
+#define COMMA_ERROR 0
+
+#define OK_EXTERN 1
+#define EXTERN_ERROR 0
+
+#define OK_ENTRY 1
+#define ENTRY_ERROR 0
+
+
 #define VALID_SYNTAX 1
 #define SYNTAX_ERROR 0
+#define INVALID_OPERAND 0
+
+
 
 /* שימי לב לתוספות בחתימה: the_first_word ו- IC */
 int process_machine_instruction(char* line, int index, int label_flag, int line_number, char* the_first_word, char* the_instruction, OneMakro* macrosArray, int total_macros_found, int* IC)
@@ -54,11 +138,7 @@ int process_machine_instruction(char* line, int index, int label_flag, int line_
 
 
 
-#define VALID_SYNTAX 1
-#define SYNTAX_ERROR 0
 
-#define VALID_SYNTAX 1
-#define SYNTAX_ERROR 0
 
 /**
  * process_zero_operands - Validates instructions that take no operands (e.g., rts, stop).
@@ -243,4 +323,66 @@ int process_two_operands(int line_number, char* line, int index, char* operation
 
     /* Line is flawlessly constructed! */
     return VALID_SYNTAX;
+
+
+}
+
+/* Added line_number to the parameters, and changed return type to void */
+void encode_operation(unsigned int opcode, unsigned int funct, int source_mode, int destination_mode, int* IC, int line_number)
+{
+    unsigned short machine_code = 0;
+
+    /* 1. Pack the bits together using bitwise OR (|) */
+    /* Note: If source or destination mode is NO_OPERAND (-1),
+       make sure your push_ functions treat it as 0 so it doesn't mess up the bits! */
+    machine_code = (push_opcode(opcode) | push_funct(funct) | push_source_mode(source_mode) | push_destination_mode(destination_mode));
+
+    /* 2. Add the completely built word to the Code Image array.
+       We pass *IC (the actual address value), and NULL for the label name. */
+    add_code_word(*IC, machine_code, NULL, line_number);
+
+    /* 3. Promote the Instruction Counter for the next words */
+    (*IC)++;
+}
+
+/**
+ * encode_operand - Encodes a single operand into the memory image based on its addressing mode.
+ * It extracts values (like integers or register numbers) to build the machine code word,
+ * or saves raw label names to be resolved later in the Second Pass.
+ * Finally, it adds the word to the Code Image array and increments the Instruction Counter (IC).
+ *
+ * @param operand The string representing the operand (e.g., "#5", "LOOP", "%LOOP", "r3").
+ * @param mode The addressing mode of the operand (0, 1, 2, or 3).
+ * @param IC Pointer to the Instruction Counter, incremented after adding the word.
+ * @param line_number The current line number, saved for error reporting in the Second Pass.
+ */
+void encode_operand(char* operand, int mode, int* IC, int line_number)
+{
+    unsigned short machine_code = 0;
+
+    if (mode == ADDRESSING_MODE_0)
+    {
+        /* Skip the '#' and convert the string to an integer */
+        machine_code = (unsigned short)atoi(operand + 1);
+        add_code_word(*IC, machine_code, NULL, line_number);
+    }
+    else if (mode == ADDRESSING_MODE_1)
+    {
+        /* Direct label. Machine code is 0 for now. Save the label name for Second Pass. */
+        add_code_word(*IC, 0, operand, line_number);
+    }
+    else if (mode == ADDRESSING_MODE_2)
+    {
+        /* Relative label. Skip the '%' character and save the label name. */
+        add_code_word(*IC, 0, operand + 1, line_number);
+    }
+    else if (mode == ADDRESSING_MODE_3)
+    {
+        /* Register. Skip the 'r' and push to the correct bits. */
+        machine_code = push_register(operand + 1);
+        add_code_word(*IC, machine_code, NULL, line_number);
+    }
+
+    /* CRITICAL: Advance the Instruction Counter after adding the word! */
+    (*IC)++;
 }

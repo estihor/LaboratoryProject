@@ -52,7 +52,8 @@ void add_symbol(char* name, int value, int is_code, int is_data, int is_entry, i
 }
 
 /* --- Implementation: Add to Code Image --- */
-void add_code_word(int address, unsigned short code, char* label_name, int line) {
+void add_code_word(int address, unsigned short code, char* label_name, int line) 
+{
     CodeImage* temp;
 
     /* 1. Increase the count of machine instructions */
