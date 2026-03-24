@@ -39,13 +39,29 @@ int main(int argc, char* argv[])
 
         if (amFileForFirstPass != NULL)
         {
-            /* Run the first pass analysis using the expanded file and the macro table */
-            first_pass(amFileForFirstPass, macrosArray, total_macros_found);
+            /* Stores the completion status of the first pass (0 for success, 1 for errors) */
+            int first_pass_status;
 
-            /* Close the file after scanning */
+            /* Run the first pass analysis on the expanded file */
+            first_pass_status = first_pass(amFileForFirstPass, macrosArray, total_macros_found);
+
+            /* Close the file immediately after scanning is complete */
             fclose(amFileForFirstPass);
-        }
 
+            /* Evaluate the outcome of the first pass */
+            if (first_pass_status == 1)
+            {
+                /* Errors were found! Print a warning and skip to the next file */
+                printf("Errors detected in First Pass for file: %s.am. Skipping Second Pass.\n", argv[i]);
+            }
+            else
+            {
+                /* Flawless execution! It is safe to proceed to the Second Pass */
+                printf("First Pass successful for file: %s.am. Proceeding to Second Pass...\n", argv[i]);
+
+                /* Call second_pass(...) here in the future */
+            }
+        }
 
         /* Free all dynamically allocated memory for the current file */
         Release_the_macrosArray(macrosArray, total_macros_found);
