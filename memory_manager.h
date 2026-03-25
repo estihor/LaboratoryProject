@@ -42,5 +42,6 @@ void add_data_word(int address, unsigned short word);
 /* Frees all dynamically allocated memory */
 void free_all_memory();
 int is_label_exists(char* search_name);
+void update_data_symbols_address(int final_IC);
 
 #endif

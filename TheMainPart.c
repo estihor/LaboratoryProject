@@ -1,5 +1,6 @@
 #include "Pre_Assembler.h"
 #include "first_pass.h"
+#include "memory_manager.h"
 int main(int argc, char* argv[])
 {
     FILE* asFile;
@@ -61,10 +62,15 @@ int main(int argc, char* argv[])
 
                 /* Call second_pass(...) here in the future */
             }
+
         }
 
+     
         /* Free all dynamically allocated memory for the current file */
         Release_the_macrosArray(macrosArray, total_macros_found);
+
+        /* חובה! ניקוי טבלת הסמלים ותמונות הזיכרון לקראת הקובץ הבא */
+        free_all_memory();
     }
     return 0;
 }

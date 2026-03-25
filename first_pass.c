@@ -491,6 +491,10 @@ int first_pass(FILE* amFile, OneMakro* macrosArray, int total_macros_found)
         /* Increment line counter before reading the next line */
         line_number++;
     }
+    /* Update addresses of data symbols before finishing the first pass */
+    update_data_symbols_address(IC);
+
     /* Return the final status to the main function */
     return error_flag;
+   
 }

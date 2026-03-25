@@ -139,3 +139,18 @@ int is_label_exists(char* search_name)
     }
     return OK_LABEL;
 }
+
+/* Updates the final addresses of data symbols by adding the final IC */
+void update_data_symbols_address(int final_IC)
+{
+    int i;
+    for (i = 0; i < symbol_count; i++)
+    {
+        /* Check if the symbol is a data symbol (.data or .string) */
+        if (symbol_table[i].is_data == 1)
+        {
+            /* Add the final IC to its relative DC address */
+            symbol_table[i].labelAddress += final_IC;
+        }
+    }
+}
