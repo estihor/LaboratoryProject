@@ -264,7 +264,7 @@ int process_two_operands(int line_number, char* line, int index, char* operation
         printf("Error at line %d: Missing comma between operands\n", line_number);
         return SYNTAX_ERROR;
     }
-
+    index = skip_the_spaces(line, index);
     index = cut_the_next_word(line, index, second_operand);
     if (strlen(second_operand) == 0)
     {

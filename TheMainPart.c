@@ -43,6 +43,7 @@ int main(int argc, char* argv[])
             /* Stores the completion status of the first pass (0 for success, 1 for errors) */
             int first_pass_status;
 
+            printf("\n--- Starting First Pass analysis for file: %s.am ---\n", argv[i]);
             /* Run the first pass analysis on the expanded file */
             first_pass_status = first_pass(amFileForFirstPass, macrosArray, total_macros_found);
 

@@ -65,5 +65,11 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />
+    <None Include="good_test.as">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="bad_test.as">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
