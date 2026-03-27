@@ -18,6 +18,7 @@ int main(int argc, char* argv[])
     /* Loop through each file provided by the user */
     for (i = 1; i < argc; i++)
     {
+        AssemblerData assembler_data = { NULL, 0, NULL, 0, NULL, 0 };
         total_macros_found = 0;/* Reset the macro counter for each new file */
         /* Open the source (.as) and target (.am) files */
         asFile = create_asEnding_Tofile(argv[i]);
@@ -45,8 +46,9 @@ int main(int argc, char* argv[])
 
             printf("\n--- Starting First Pass analysis for file: %s.am ---\n", argv[i]);
             /* Run the first pass analysis on the expanded file */
-            first_pass_status = first_pass(amFileForFirstPass, macrosArray, total_macros_found);
 
+            first_pass_status = first_pass(amFileForFirstPass, macrosArray, total_macros_found, &assembler_data);
+        
             /* Close the file immediately after scanning is complete */
             fclose(amFileForFirstPass);
 
@@ -69,9 +71,7 @@ int main(int argc, char* argv[])
      
         /* Free all dynamically allocated memory for the current file */
         Release_the_macrosArray(macrosArray, total_macros_found);
-
-        /* חובה! ניקוי טבלת הסמלים ותמונות הזיכרון לקראת הקובץ הבא */
-        free_all_memory();
+        free_all_memory(&assembler_data);
     }
     return 0;
 }

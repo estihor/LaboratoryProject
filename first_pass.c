@@ -89,7 +89,7 @@
  * @param line_number The current line number in the file for error reporting.
  * @return 1 if an error is found, or 0 if the label is completely valid.
  */
-int check_label_validity(char* label_name, OneMakro* macrosArray, int total_macros, int line_number)
+int check_label_validity(char* label_name, OneMakro* macrosArray, int total_macros, int line_number, AssemblerData* state)
 {
     /* 1. Validate label name syntax (length, starts with letter, valid chars, not reserved) */
     if (is_it_a_valid_label(macrosArray, label_name, total_macros) != OK_LABEL)
@@ -100,7 +100,7 @@ int check_label_validity(char* label_name, OneMakro* macrosArray, int total_macr
     }
 
     /* 2. Check if the label is already defined in the symbol table */
-    if (is_label_exists(label_name) == LABEL_ERROR)
+    if (is_label_exists(label_name, state) == LABEL_ERROR)
     {
         /* Print a duplicate label error */
         printf("Error at line %d: Label '%s' is already defined!\n", line_number, label_name);
@@ -122,7 +122,7 @@ int check_label_validity(char* label_name, OneMakro* macrosArray, int total_macr
  * @param start_index The exact index in the line where the opening quote '"' is located.
  * @param DC A pointer to the Data Counter, ensuring updates are saved in the main pass.
  */
-void encode_the_string_into_the_data_image(char* line, int start_index, int* DC)
+void encode_the_string_into_the_data_image(char* line, int start_index, int* DC, AssemblerData* state)
 {
     /* Start from start_index + 1 to explicitly skip the opening quote '"' */
     int i = start_index + 1;
@@ -131,7 +131,7 @@ void encode_the_string_into_the_data_image(char* line, int start_index, int* DC)
     while (line[i] != '"')
     {
         /* Step 1: Add the ASCII value of the current character to the data array */
-        add_data_word(*DC, (unsigned short)line[i]);
+        add_data_word(*DC, (unsigned short)line[i], state);
 
         /* Step 2: Increment the Data Counter for the next memory address */
         (*DC)++;
@@ -142,7 +142,7 @@ void encode_the_string_into_the_data_image(char* line, int start_index, int* DC)
 
     /* Assembly requirement: Always append a null terminator ('\0' / ASCII 0)
      * at the end of every string stored in memory. */
-    add_data_word(*DC, 0);
+    add_data_word(*DC, 0, state);
     
     /* Increment DC one last time for the null terminator */
     (*DC)++;
@@ -159,7 +159,7 @@ void encode_the_string_into_the_data_image(char* line, int start_index, int* DC)
  * @param line_number Current line number for error reporting.
  * @return OK_STRING if successful, STRING_ERROR if syntax errors exist.
  */
-int process_of_string(char* line, int index, int* DC, int line_number)
+int process_of_string(char* line, int index, int* DC, int line_number, AssemblerData* state)
 {
     /* Step 1: Skip spaces after ".string" */
     index = skip_the_spaces(line, index);
@@ -173,7 +173,7 @@ int process_of_string(char* line, int index, int* DC, int line_number)
     }
 
     /* Step 3: String is valid, encode it to memory */
-    encode_the_string_into_the_data_image(line, index, DC);
+    encode_the_string_into_the_data_image(line, index, DC, state);
 
     return OK_STRING;
 }
@@ -190,7 +190,7 @@ int process_of_string(char* line, int index, int* DC, int line_number)
  * @param line_number Current line number for error reporting.
  * @return OK_DATA if successful, DATA_ERROR if syntax errors exist.
  */
-int process_and_encode_data(char* line, int index, int* DC, int line_number)
+int process_and_encode_data(char* line, int index, int* DC, int line_number, AssemblerData* state)
 {
     char current_number_str[82] = { 0 };
     int num_value;
@@ -220,7 +220,7 @@ int process_and_encode_data(char* line, int index, int* DC, int line_number)
         {
             /* Number is valid, encode immediately to memory */
             num_value = atoi(current_number_str);
-            add_data_word(*DC, num_value);
+            add_data_word(*DC, num_value, state);
             (*DC)++;
 
             /* Skip spaces after the number to check the next character */
@@ -243,6 +243,10 @@ int process_and_encode_data(char* line, int index, int* DC, int line_number)
                 {
                     /* Check for a trailing comma (e.g., "5, 8, \n") */
                     index = skip_the_spaces(line, index);
+                    if (line[index] == ',') {
+                        printf("Error at line %d: Multiple consecutive commas found!\n", line_number);
+                        error_found = 1;
+                    }
                     if (line[index] == '\n' || line[index] == '\0') {
                         printf("Error at line %d: Extraneous comma at end of line.\n", line_number);
                         error_found = 1;
@@ -276,7 +280,7 @@ int process_and_encode_data(char* line, int index, int* DC, int line_number)
  * @param total_macros_found The total number of macros currently defined.
  * @return OK_EXTERN if successful, EXTERN_ERROR if syntax errors exist.
  */
-int process_of_extern(char* line, int index, int label_flag, int line_number, OneMakro* macrosArray, int total_macros_found)
+int process_of_extern(char* line, int index, int label_flag, int line_number, OneMakro* macrosArray, int total_macros_found, AssemblerData* state)
 {
     char the_operand[82] = { 0 };
 
@@ -298,13 +302,13 @@ int process_of_extern(char* line, int index, int label_flag, int line_number, On
     }
 
     /* Validate the operand label syntax and check that it doesn't already exist */
-    if (check_label_validity(the_operand, macrosArray, total_macros_found, line_number) == 1)
+    if (check_label_validity(the_operand, macrosArray, total_macros_found, line_number, state) == 1)
     {
         return EXTERN_ERROR;
     }
 
     /* Insert the valid external label into the symbol table */
-    add_symbol(the_operand, 0, 0, 0, 0, 1);
+    add_symbol(the_operand, 0, 0, 0, 0, 1, state);
 
     /* Check for extraneous text after the operand */
     index = skip_the_spaces(line, index);
@@ -373,7 +377,7 @@ int process_of_entry(char* line, int index, int label_flag, int line_number, One
 
 
 
-int first_pass(FILE* amFile, OneMakro* macrosArray, int total_macros_found)
+int first_pass(FILE* amFile, OneMakro* macrosArray, int total_macros_found, AssemblerData* state)
 {
     char line[82];                   /* Buffer for reading the current line */
     int IC = 100;                    /* Instruction Counter, starts at 100 */
@@ -424,7 +428,7 @@ int first_pass(FILE* amFile, OneMakro* macrosArray, int total_macros_found)
                     the_first_word[first_word_length - 1] = '\0';
 
                     /* Call the helper function to check label syntax and duplicates */
-                    if (check_label_validity(the_first_word, macrosArray, total_macros_found, line_number) == 1)
+                    if (check_label_validity(the_first_word, macrosArray, total_macros_found, line_number, state) == 1)
                     {
                         error_flag = 1; /* Helper found an error, turn on the error flag */
                     }
@@ -450,11 +454,11 @@ int first_pass(FILE* amFile, OneMakro* macrosArray, int total_macros_found)
                     /* Add the valid label to the symbol table as a data symbol */
                     if (label_flag == 1)
                     {
-                        add_symbol(the_first_word, DC, 0, 1, 0, 0);
+                        add_symbol(the_first_word, DC, 0, 1, 0, 0, state);
                     }
                     line_index = skip_the_spaces(line, line_index);
 
-                    if (process_of_string(line, line_index, &DC, line_number) == STRING_ERROR)
+                    if (process_of_string(line, line_index, &DC, line_number, state) == STRING_ERROR)
                     {
                         error_flag = 1;
                     }
@@ -466,18 +470,18 @@ int first_pass(FILE* amFile, OneMakro* macrosArray, int total_macros_found)
                     /* Add the valid label to the symbol table as a data symbol */
                     if (label_flag == 1)
                     {
-                        add_symbol(the_first_word, DC, 0, 1, 0, 0);
+                        add_symbol(the_first_word, DC, 0, 1, 0, 0, state);
                     }
                     line_index = skip_the_spaces(line, line_index);
 
-                    if (process_and_encode_data(line, line_index, &DC, line_number) == DATA_ERROR)
+                    if (process_and_encode_data(line, line_index, &DC, line_number, state) == DATA_ERROR)
                     {
                         error_flag = 1;
                     }
                 }
                 else if (strcmp(the_instruction, ".extern") == 0)
                 {
-                    if (process_of_extern(line, line_index, label_flag, line_number, macrosArray, total_macros_found) == EXTERN_ERROR)
+                    if (process_of_extern(line, line_index, label_flag, line_number, macrosArray, total_macros_found, state) == EXTERN_ERROR)
                     {
                         error_flag = 1;
                     }
@@ -491,7 +495,7 @@ int first_pass(FILE* amFile, OneMakro* macrosArray, int total_macros_found)
                 }
                 else
                 {
-                    if (process_machine_instruction(line, line_index, label_flag, line_number, the_first_word, the_instruction, macrosArray, total_macros_found, &IC) == SYNTAX_ERROR)
+                    if (process_machine_instruction(line, line_index, label_flag, line_number, the_first_word, the_instruction, macrosArray, total_macros_found, &IC, state) == SYNTAX_ERROR)
                     {
                         error_flag = 1;
                     }
@@ -504,7 +508,7 @@ int first_pass(FILE* amFile, OneMakro* macrosArray, int total_macros_found)
         line_number++;
     }
     /* Update addresses of data symbols before finishing the first pass */
-    update_data_symbols_address(IC);
+    update_data_symbols_address(IC, state);
 
     /* Return the final status to the main function */
     return error_flag;

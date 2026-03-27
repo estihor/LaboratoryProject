@@ -12,27 +12,17 @@
 
 #define LABLE_ERROR  0
 
- /* * Internal dynamic arrays.
-  * These pointers store the base addresses of our dynamic memory blocks.
-  */
-label* symbol_table = NULL;
-int symbol_count = 0;
-
-CodeImage* code_image = NULL;
-int code_count = 0;
-
-DataImage* data_image = NULL;
-int data_count = 0;
-
+ 
 /* --- Implementation: Add to Symbol Table --- */
-void add_symbol(char* name, int value, int is_code, int is_data, int is_entry, int is_extern) {
+void add_symbol(char* name, int value, int is_code, int is_data, int is_entry, int is_extern, AssemblerData* state)
+{
     label* temp;
 
     /* 1. Increase the logical count of labels */
-    symbol_count++;
+    state->symbol_count++;
 
     /* 2. Resize the array to fit the new label structure using realloc */
-    temp = (label*)realloc(symbol_table, symbol_count * sizeof(label));
+    temp = (label*)realloc(state->symbol_table, state->symbol_count * sizeof(label));
 
     /* 3. Memory safety check */
     if (temp == NULL) {
@@ -40,117 +30,118 @@ void add_symbol(char* name, int value, int is_code, int is_data, int is_entry, i
         exit(1);
     }
 
-    symbol_table = temp;
+    state->symbol_table = temp;
 
     /* 4. Populate the new label entry using the updated field names: labelName and labelAddress */
-    strcpy(symbol_table[symbol_count - 1].labelName, name);
-    symbol_table[symbol_count - 1].labelAddress = value;
-    symbol_table[symbol_count - 1].is_code = is_code;
-    symbol_table[symbol_count - 1].is_data = is_data;
-    symbol_table[symbol_count - 1].is_entry = is_entry;
-    symbol_table[symbol_count - 1].is_extern = is_extern;
+    strcpy(state->symbol_table[state->symbol_count - 1].labelName, name);
+    state->symbol_table[state->symbol_count - 1].labelAddress = value;
+    state->symbol_table[state->symbol_count - 1].is_code = is_code;
+    state->symbol_table[state->symbol_count - 1].is_data = is_data;
+    state->symbol_table[state->symbol_count - 1].is_entry = is_entry;
+    state->symbol_table[state->symbol_count - 1].is_extern = is_extern;
 }
 
 /* --- Implementation: Add to Code Image --- */
-void add_code_word(int address, unsigned short code, char* label_name, int line) 
+void add_code_word(int address, unsigned short code, char* label_name, int line, AssemblerData* state)
 {
     CodeImage* temp;
 
     /* 1. Increase the count of machine instructions */
-    code_count++;
+    state->code_count++;
 
     /* 2. Expand the code image array */
-    temp = (CodeImage*)realloc(code_image, code_count * sizeof(CodeImage));
+    temp = (CodeImage*)realloc(state->code_image, state->code_count * sizeof(CodeImage));
 
     if (temp == NULL) {
         printf("Fatal Error: Memory allocation failed (Code Image)\n");
         exit(1);
     }
 
-    code_image = temp;
+    state->code_image = temp;
 
     /* 3. Populate the entry with updated field names */
-    code_image[code_count - 1].Memory_address = address;
-    code_image[code_count - 1].machine_code = code;
-    code_image[code_count - 1].the_line_of_the_label = line;
+    state->code_image[state->code_count - 1].Memory_address = address;
+    state->code_image[state->code_count - 1].machine_code = code;
+    state->code_image[state->code_count - 1].the_line_of_the_label = line;
 
     /* 4. Handle unresolved labels for the Second Pass */
     if (label_name != NULL) {
-        strcpy(code_image[code_count - 1].missing_label, label_name);
+        strcpy(state->code_image[state->code_count - 1].missing_label, label_name);
     }
     else {
-        code_image[code_count - 1].missing_label[0] = '\0';
+        state->code_image[state->code_count - 1].missing_label[0] = '\0';
     }
 }
 
 /* --- Implementation: Add to Data Image --- */
-void add_data_word(int address, unsigned short word) {
+void add_data_word(int address, unsigned short word , AssemblerData* state) 
+{
     DataImage* temp;
 
     /* 1. Increase the count of data words */
-    data_count++;
+    state->data_count++;
 
     /* 2. Expand the data image array */
-    temp = (DataImage*)realloc(data_image, data_count * sizeof(DataImage));
+    temp = (DataImage*)realloc(state->data_image, state->data_count * sizeof(DataImage));
 
     if (temp == NULL) {
         printf("Fatal Error: Memory allocation failed (Data Image)\n");
         exit(1);
     }
 
-    data_image = temp;
+    state->data_image = temp;
 
     /* 3. Store data using updated field names: MemoryAddress and machine_code */
-    data_image[data_count - 1].MemoryAddress = address;
-    data_image[data_count - 1].machine_code = word;
+    state->data_image[state->data_count - 1].MemoryAddress = address;
+    state->data_image[state->data_count - 1].machine_code = word;
 }
 
 /* --- Implementation: Free all memory --- */
-void free_all_memory() {
+void free_all_memory(AssemblerData* state) {
     /* * Safely release all allocated memory and reset pointers to NULL.
      * This prevents memory leaks and "dangling pointers".
      */
-    if (symbol_table != NULL) {
-        free(symbol_table);
-        symbol_table = NULL;
-        symbol_count = 0;
+    if (state->symbol_table != NULL) {
+        free(state->symbol_table);
+        state->symbol_table = NULL;
+        state->symbol_count = 0;
     }
 
-    if (code_image != NULL) {
-        free(code_image);
-        code_image = NULL;
-        code_count = 0;
+    if (state->code_image != NULL) {
+        free(state->code_image);
+        state->code_image = NULL;
+        state->code_count = 0;
     }
 
-    if (data_image != NULL) {
-        free(data_image);
-        data_image = NULL;
-        data_count = 0;
+    if (state->data_image != NULL) {
+        free(state->data_image);
+        state->data_image = NULL;
+        state->data_count = 0;
     }
 }
 
-int is_label_exists(char* search_name)
+int is_label_exists(char* search_name,  AssemblerData* state)
 {
     int i; 
-    for (i = 0; i < symbol_count; i++)
+    for (i = 0; i < state->symbol_count; i++)
     {
-        if (strcmp(symbol_table[i].labelName, search_name)==0)
+        if (strcmp(state->symbol_table[i].labelName, search_name)==0)
             return LABLE_ERROR;
     }
     return OK_LABEL;
 }
 
 /* Updates the final addresses of data symbols by adding the final IC */
-void update_data_symbols_address(int final_IC)
+void update_data_symbols_address(int final_IC, AssemblerData* state)
 {
     int i;
-    for (i = 0; i < symbol_count; i++)
+    for (i = 0; i < state->symbol_count; i++)
     {
         /* Check if the symbol is a data symbol (.data or .string) */
-        if (symbol_table[i].is_data == 1)
+        if (state->symbol_table[i].is_data == 1)
         {
             /* Add the final IC to its relative DC address */
-            symbol_table[i].labelAddress += final_IC;
+            state->symbol_table[i].labelAddress += final_IC;
         }
     }
 }

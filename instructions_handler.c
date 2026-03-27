@@ -80,7 +80,7 @@
  * @param IC Pointer to the Instruction Counter.
  * @return 0 if perfectly valid and encoded, 1 if a syntax error was found.
  */
-int process_machine_instruction(char* line, int index, int label_flag, int line_number, char* the_first_word, char* the_instruction, OneMakro* macrosArray, int total_macros_found, int* IC)
+int process_machine_instruction(char* line, int index, int label_flag, int line_number, char* the_first_word, char* the_instruction, OneMakro* macrosArray, int total_macros_found, int* IC, AssemblerData* state)
 {
     unsigned int num_of_operands;
     unsigned int opcode = 0;
@@ -98,7 +98,7 @@ int process_machine_instruction(char* line, int index, int label_flag, int line_
     if (label_flag == 1)
     {
         /* We pass *IC because IC is a pointer, and we need its actual value here */
-        add_symbol(the_first_word, *IC, 1, 0, 0, 0);
+        add_symbol(the_first_word, *IC, 1, 0, 0, 0, state);
     }
 
     /* Get the specific opcode and funct for this operation */
@@ -108,21 +108,21 @@ int process_machine_instruction(char* line, int index, int label_flag, int line_
     if (num_of_operands == 0)
     {
         /* We pass IC directly because it is already a pointer */
-        if (process_zero_operands(line_number, line, index, opcode, funct, IC) == SYNTAX_ERROR)
+        if (process_zero_operands(line_number, line, index, opcode, funct, IC,  state) == SYNTAX_ERROR)
         {
             return 0;
         }
     }
     else if (num_of_operands == 1)
     {
-        if (process_one_operand(line_number, line, index, the_instruction, macrosArray, total_macros_found, opcode, funct, IC) == SYNTAX_ERROR)
+        if (process_one_operand(line_number, line, index, the_instruction, macrosArray, total_macros_found, opcode, funct, IC,state) == SYNTAX_ERROR)
         {
             return 0;
         }
     }
     else if (num_of_operands == 2)
     {
-        if (process_two_operands(line_number, line, index, the_instruction, macrosArray, total_macros_found,  opcode, funct, IC) == SYNTAX_ERROR)
+        if (process_two_operands(line_number, line, index, the_instruction, macrosArray, total_macros_found,  opcode, funct, IC,  state) == SYNTAX_ERROR)
         {
             return 0;
         }
@@ -145,7 +145,7 @@ int process_machine_instruction(char* line, int index, int label_flag, int line_
  * @param IC Pointer to the Instruction Counter.
  * @return VALID_SYNTAX (1) if successful, SYNTAX_ERROR (0) otherwise.
  */
-int process_zero_operands(int line_number, char* line, int index, unsigned int opcode, unsigned int funct, int* IC)
+int process_zero_operands(int line_number, char* line, int index, unsigned int opcode, unsigned int funct, int* IC, AssemblerData* state)
 {
     index = skip_the_spaces(line, index);
 
@@ -156,7 +156,7 @@ int process_zero_operands(int line_number, char* line, int index, unsigned int o
     }
 
     /* Encode the first word. No operands, so we send NO_OPERAND for modes */
-    encode_operation(opcode, funct, NO_OPERAND, NO_OPERAND, IC, line_number);
+    encode_operation(opcode, funct, NO_OPERAND, NO_OPERAND, IC, line_number, state);
 
     return VALID_SYNTAX;
 }
@@ -178,7 +178,7 @@ int process_zero_operands(int line_number, char* line, int index, unsigned int o
  * @param IC Pointer to the Instruction Counter.
  * @return VALID_SYNTAX (1) if successful, SYNTAX_ERROR (0) otherwise.
  */
-int process_one_operand(int line_number, char* line, int index, char* operation_name, OneMakro* macrosArray, int total_macros, unsigned int opcode, unsigned int funct, int* IC)
+int process_one_operand(int line_number, char* line, int index, char* operation_name, OneMakro* macrosArray, int total_macros, unsigned int opcode, unsigned int funct, int* IC, AssemblerData* state)
 {
     char the_operand[82] = { 0 };
     int dest_mode;
@@ -217,8 +217,8 @@ int process_one_operand(int line_number, char* line, int index, char* operation_
     }
 
     /* --- PART 4: ENCODING --- */
-    encode_operation(opcode, funct, NO_OPERAND, dest_mode, IC, line_number);
-    encode_operand(the_operand, dest_mode, IC, line_number);
+    encode_operation(opcode, funct, NO_OPERAND, dest_mode, IC, line_number, state);
+    encode_operand(the_operand, dest_mode, IC, line_number, state);
 
     return VALID_SYNTAX;
 }
@@ -241,7 +241,7 @@ int process_one_operand(int line_number, char* line, int index, char* operation_
  * @param IC Pointer to the Instruction Counter.
  * @return VALID_SYNTAX (1) if successful, SYNTAX_ERROR (0) otherwise.
  */
-int process_two_operands(int line_number, char* line, int index, char* operation_name, OneMakro* macrosArray, int total_macros, unsigned int opcode, unsigned int funct, int* IC)
+int process_two_operands(int line_number, char* line, int index, char* operation_name, OneMakro* macrosArray, int total_macros, unsigned int opcode, unsigned int funct, int* IC, AssemblerData* state)
 {
     char first_operand[82] = { 0 };
     char second_operand[82] = { 0 };
@@ -303,9 +303,9 @@ int process_two_operands(int line_number, char* line, int index, char* operation
     }
 
     /* --- PART 4: ENCODING --- */
-    encode_operation(opcode, funct, source_mode, dest_mode, IC, line_number);
-    encode_operand(first_operand, source_mode, IC, line_number);
-    encode_operand(second_operand, dest_mode, IC, line_number);
+    encode_operation(opcode, funct, source_mode, dest_mode, IC, line_number, state);
+    encode_operand(first_operand, source_mode, IC, line_number, state);
+    encode_operand(second_operand, dest_mode, IC, line_number, state);
 
     return VALID_SYNTAX;
 }
@@ -322,7 +322,7 @@ int process_two_operands(int line_number, char* line, int index, char* operation
  * @param IC Pointer to the Instruction Counter, incremented after adding the word.
  * @param line_number The current line number.
  */
-void encode_operation(unsigned int opcode, unsigned int funct, int source_mode, int destination_mode, int* IC, int line_number)
+void encode_operation(unsigned int opcode, unsigned int funct, int source_mode, int destination_mode, int* IC, int line_number, AssemblerData* state)
 {
     unsigned short machine_code = 0;
 
@@ -331,7 +331,7 @@ void encode_operation(unsigned int opcode, unsigned int funct, int source_mode, 
     machine_code = (push_opcode(opcode) | push_funct(funct) | push_source_mode(source_mode) | push_destination_mode(destination_mode));
 
     /* 2. Add the completely built word to the Code Image array */
-    add_code_word(*IC, machine_code, NULL, line_number);
+    add_code_word(*IC, machine_code, NULL, line_number, state);
 
     /* 3. Promote the Instruction Counter for the next words */
     (*IC)++;
@@ -347,7 +347,7 @@ void encode_operation(unsigned int opcode, unsigned int funct, int source_mode, 
  * @param IC Pointer to the Instruction Counter, incremented after adding the word.
  * @param line_number The current line number, saved for error reporting in the Second Pass.
  */
-void encode_operand(char* operand, int mode, int* IC, int line_number)
+void encode_operand(char* operand, int mode, int* IC, int line_number, AssemblerData* state)
 {
     unsigned short machine_code = 0;
 
@@ -355,24 +355,24 @@ void encode_operand(char* operand, int mode, int* IC, int line_number)
     {
         /* Skip the '#' and convert the string to an integer */
         machine_code = (unsigned short)atoi(operand + 1);
-        add_code_word(*IC, machine_code, NULL, line_number);
+        add_code_word(*IC, machine_code, NULL, line_number, state);
     }
     else if (mode == ADDRESSING_MODE_1)
     {
         /* Direct label. Machine code is 0 for now. Save the label name for Second Pass. */
-        add_code_word(*IC, 0, operand, line_number);
+        add_code_word(*IC, 0, operand, line_number, state);
     }
     else if (mode == ADDRESSING_MODE_2)
     {
         /* Relative label. Skip the '%' character and save the label name. */
-        add_code_word(*IC, 0, operand + 1, line_number);
+        add_code_word(*IC, 0, operand + 1, line_number, state);
     }
     else if (mode == ADDRESSING_MODE_3)
     {
         /* Register. Skip the 'r' and push to the correct bits. */
         /* Note: Ensure push_register knows exactly where to push the bits! */
         machine_code = push_register(operand + 1);
-        add_code_word(*IC, machine_code, NULL, line_number);
+        add_code_word(*IC, machine_code, NULL, line_number, state);
     }
 
     /* CRITICAL: Advance the Instruction Counter after adding the word! */

@@ -31,17 +31,28 @@ typedef struct {
     unsigned short machine_code;  /* The 16-bit binary data word */
 } DataImage;
 
+typedef struct {
+    label* symbol_table;
+    int symbol_count;
+
+    CodeImage* code_image;
+    int code_count;
+
+    DataImage* data_image;
+    int data_count;
+} AssemblerData;
+
 /* --- Function Prototypes --- */
 
 /* Adds a symbol to the dynamic symbol table */
-void add_symbol(char* name, int value, int is_code, int is_data, int is_entry, int is_extern);
+void add_symbol(char* name, int value, int is_code, int is_data, int is_entry, int is_extern, AssemblerData* state);
 /* Adds a machine word to the code image array */
-void add_code_word(int address, unsigned short code, char* label, int line);
+void add_code_word(int address, unsigned short code, char* label, int line, AssemblerData* state);
 /* Adds a data word to the data image array */
-void add_data_word(int address, unsigned short word);
+void add_data_word(int address, unsigned short word, AssemblerData* state);
 /* Frees all dynamically allocated memory */
-void free_all_memory();
-int is_label_exists(char* search_name);
-void update_data_symbols_address(int final_IC);
+void free_all_memory(AssemblerData* state);
+int is_label_exists(char* search_name, AssemblerData* state);
+void update_data_symbols_address(int final_IC, AssemblerData* state);
 
 #endif
