@@ -1,24 +1,24 @@
-; This file is completely valid and should pass without ANY errors!
-.entry MaxLenLabelExactlyThirtyOneChar
-.extern ExternalFunc
+; קובץ תקין לחלוטין לבדיקת אלגוריתם המעבר הראשון
 
-; 1. Testing max length label (exactly 31 characters)
-MaxLenLabelExactlyThirtyOneChar: mov r1, r2
+.entry MAIN
+.extern EXTERNALLABEL
 
-; 2. Testing all valid addressing modes for add 
-add #100, MaxLenLabelExactlyThirtyOneChar
-add r5, r6
-add MaxLenLabelExactlyThirtyOneChar, r1
+mcro mycalc
+    add r1, r2
+    inc r3
+endmcro
 
-; 3. Testing relative addressing (mode 2) - valid only for jumps
-LOOP: jmp %ExternalFunc
-      bne %LOOP
+MAIN:           lea DATAARR, r4
+                mycalc
+                jmp %LOOP1
+LOOP1:          prn #-5
+                prn #123
+                sub r1, r5
+                bne %EXTERNALLABEL
+                
+                ; פקודות ללא אופרנדים
+                rts
+                stop
 
-; 4. Testing a very long string, but perfectly legal
-LongStr: .string "This is a very long string but it is totally legal!"
-
-; 5. Testing valid data with tricky spaces and signs
-NUMBERS: .data +5, -10 ,0 , 99
-
-; 6. A line that is exactly 79 characters long (plus \n makes it 80 - legal)
-; 12345678901234567890123456789012345678901234567890123456789012345678901234567
+DATAARR:        .data 6, -9, 15, 100
+STRLABEL:       .string "Perfect String"

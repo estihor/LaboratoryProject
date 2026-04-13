@@ -203,9 +203,8 @@ int process_one_operand(int line_number, char* line, int index, char* operation_
     /* --- PART 2: CLASSIFICATION AND SYNTAX VALIDATION --- */
     dest_mode = what_is_the_addressing_mode(the_operand);
 
-    if (validate_operand_by_mode(the_operand, dest_mode, macrosArray, total_macros) == INVALID_OPERAND)
+    if (validate_operand_by_mode(the_operand, dest_mode, macrosArray, total_macros, line_number) == INVALID_OPERAND)
     {
-        printf("Error at line %d: Invalid operand syntax '%s'\n", line_number, the_operand);
         return SYNTAX_ERROR;
     }
 
@@ -283,15 +282,15 @@ int process_two_operands(int line_number, char* line, int index, char* operation
     source_mode = what_is_the_addressing_mode(first_operand);
     dest_mode = what_is_the_addressing_mode(second_operand);
 
-    if (validate_operand_by_mode(first_operand, source_mode, macrosArray, total_macros) == INVALID_OPERAND)
+    if (validate_operand_by_mode(first_operand, source_mode, macrosArray, total_macros, line_number) == INVALID_OPERAND)
     {
-        printf("Error at line %d: Invalid source operand syntax '%s'\n", line_number, first_operand);
+        
         return SYNTAX_ERROR;
     }
 
-    if (validate_operand_by_mode(second_operand, dest_mode, macrosArray, total_macros) == INVALID_OPERAND)
+    if (validate_operand_by_mode(second_operand, dest_mode, macrosArray, total_macros, line_number) == INVALID_OPERAND)
     {
-        printf("Error at line %d: Invalid destination operand syntax '%s'\n", line_number, second_operand);
+       
         return SYNTAX_ERROR;
     }
 

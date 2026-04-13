@@ -31,6 +31,7 @@ int main(int argc, char* argv[])
         }
         /* Pass 1: Find all macros and build the macro table */
         macrosArray = Macro_word_search(asFile, &total_macros_found);
+       
         /* Pass 2: Expand macros and write the new .am file */
         Creates_the_file_am(macrosArray, total_macros_found, asFile, amFile);
         fclose(asFile);

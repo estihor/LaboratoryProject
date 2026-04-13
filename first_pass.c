@@ -92,10 +92,9 @@
 int check_label_validity(char* label_name, OneMakro* macrosArray, int total_macros, int line_number, AssemblerData* state)
 {
     /* 1. Validate label name syntax (length, starts with letter, valid chars, not reserved) */
-    if (is_it_a_valid_label(macrosArray, label_name, total_macros) != OK_LABEL)
+    if (is_it_a_valid_label(macrosArray, label_name, total_macros, line_number) != OK_LABEL)
     {
-        /* Print a general error for an invalid label name */
-        printf("Error at line %d: Invalid label name '%s'\n", line_number, label_name);
+        
         return 1; /* Return 1 to signal first_pass that an error occurred */
     }
 
@@ -213,7 +212,8 @@ int process_and_encode_data(char* line, int index, int* DC, int line_number, Ass
         index = cut_the_next_word(line, index, current_number_str);
 
         /* Validate the extracted string is a legal integer (e.g., "-5", "12") */
-        if (is_valid_integer(current_number_str) == INTEGER_ERROR) {
+        if (is_valid_integer(current_number_str,  line_number) == INTEGER_ERROR) 
+        {
             error_found = 1; /* Turn on error flag to exit loop gracefully */
         }
         else
@@ -358,9 +358,8 @@ int process_of_entry(char* line, int index, int label_flag, int line_number, One
     }
 
     /* Validate the operand label syntax ONLY (do not check if it already exists) */
-    if (is_it_a_valid_label(macrosArray, the_operand, total_macros_found) != OK_LABEL)
+    if (is_it_a_valid_label(macrosArray, the_operand, total_macros_found,line_number) != OK_LABEL)
     {
-        printf("Error at line %d: Invalid label syntax '%s' for .entry\n", line_number, the_operand);
         return ENTRY_ERROR;
     }
 

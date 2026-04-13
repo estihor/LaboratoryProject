@@ -1,5 +1,7 @@
 #include <string.h>
+#include <stdio.h>
 #include "validations.h"
+
 
 /* Constants to avoid magic numbers */
 #define OK_OPERATION 1
@@ -248,27 +250,35 @@ int is_reserved_word(OneMakro* macrosArray, char* name, int totalMacros)
  * @param totalMacros Number of macros currently in the system.
  * @return OK_LABEL (1) if valid, LABEL_ERROR (0) otherwise.
  */
-int is_it_a_valid_label(OneMakro* macrosArray, char* name, int totalMacros)
+int is_it_a_valid_label(OneMakro* macrosArray, char* name, int totalMacros, int line_number)
 {
 	int i, len;
 
 	/* 0. Basic validation: must not be empty and must not be a reserved word */
 	if (name == NULL || name[0] == '\0')
+	{
+		printf("Error at line %d: Label name is empty.\n", line_number);
 		return LABEL_ERROR;
-
+	}
 	/* Ensure the name isn't already taken by a register, command, or macro */
 	if (is_reserved_word(macrosArray, name, totalMacros))
+	{
+		printf("Error at line %d: Illegal label name '%s'. It is a reserved system word (operation, register, or macro).\n", line_number, name);
 		return LABEL_ERROR;
-
+	}
 	/* 1. Check length: A label name cannot exceed 31 characters */
 	len = (int)strlen(name);
 	if (len > LABEL_LENGTH)
+	{
+		printf("Error at line %d: Label name '%s' exceeds the maximum allowed length of %d characters.\n", line_number, name, LABEL_LENGTH);
 		return LABEL_ERROR;
-
+	}
 	/* 2. Syntax rule: The first character must be an English letter (A-Z or a-z) */
 	if (!((name[0] >= 'a' && name[0] <= 'z') || (name[0] >= 'A' && name[0] <= 'Z')))
+	{
+		printf("Error at line %d: Illegal label name '%s'. A label must start with an English letter.\n", line_number, name);
 		return LABEL_ERROR;
-
+	}
 	/* 3. Check the rest of the name: only letters and digits are allowed */
 	for (i = 1; i < len; i++)
 	{
@@ -277,6 +287,7 @@ int is_it_a_valid_label(OneMakro* macrosArray, char* name, int totalMacros)
 			(name[i] >= 'A' && name[i] <= 'Z') ||
 			(name[i] >= '0' && name[i] <= '9')))
 		{
+			printf("Error at line %d: Illegal character found in label '%s'. Only alphanumeric characters are allowed.\n", line_number, name);
 			return LABEL_ERROR;
 		}
 	}
@@ -326,14 +337,18 @@ int what_is_the_addressing_mode( char* argument)
  * @param argument A pointer to the argument string (e.g., "+5", "-12", "42").
  * @return OK_ADDRESSING_MODE_0 (1) if valid, ADDRESSING_MODE_0_ERROR (0) otherwise.
  */
-int is_valid_integer(char* argument)
+int is_valid_integer(char* argument,int line_number)
 {
 	/* Must initialize to 0 to always start from the first character */
 	int i = 0;
 
 	/*  safety check before accessing the string */
 	if (argument == NULL || argument[0] == '\0')
+	{ 
+		printf("Error at line %d: Missing number for operand.\n", line_number);
 		return INTEGER_ERROR;
+	}
+		
 
 	/*  Check for an optional '+' or '-' sign. If found, advance 'i' */
 	if (argument[0] == '+' || argument[0] == '-')
@@ -341,7 +356,10 @@ int is_valid_integer(char* argument)
 
 	/*  Edge case check: return an error if there is ONLY a sign without numbers */
 	if (argument[i] == '\0')
+	{
+		printf("Error at line %d: Missing digits after the sign in number '%s'.\n", line_number, argument);
 		return INTEGER_ERROR;
+	}
 
 	/*  Iterate over the remaining characters.
 	 * Loop initialization is omitted so 'i' continues from its current position! */
@@ -349,7 +367,10 @@ int is_valid_integer(char* argument)
 	{
 		/* If the current character is not between '0' and '9', it's invalid */
 		if (argument[i] < '0' || argument[i] > '9')
+		{
+			printf("Error at line %d: Illegal non-digit character found in number '%s'.\n", line_number, argument);
 			return INTEGER_ERROR;
+		}
 	}
 
 	/*  If we passed the entire loop without returning an error - it's a valid number! */
@@ -367,7 +388,7 @@ int is_valid_integer(char* argument)
  * @param totalMacros The number of macros defined so far.
  * @return OK_ADDRESSING_MODE_2 (1) if valid, ADDRESSING_MODE_2_ERROR (0) otherwise.
  */
-int is_addressing_mode_2_valid(OneMakro* macrosArray, char* argument, int totalMacros)
+int is_addressing_mode_2_valid(OneMakro* macrosArray, char* argument, int totalMacros,int line_number)
 {
 	/* 1. Safety check before accessing the string */
 	if (argument == NULL || argument[0] == '\0')
@@ -375,11 +396,14 @@ int is_addressing_mode_2_valid(OneMakro* macrosArray, char* argument, int totalM
 
 	/* 2. Check if the first character is indeed '%' */
 	if (argument[0] != '%')
+	{
+		printf("Error at line %d: Relative addressing operand must start with '%%'.\n", line_number);
 		return ADDRESSING_MODE_2_ERROR;
+	}
 
 	/* 3. Check if the rest of the string is a valid label.
 	 * We use argument + 1 to skip the '%' and send only the label name. */
-	if (is_it_a_valid_label(macrosArray, argument + 1, totalMacros) == OK_LABEL)
+	if (is_it_a_valid_label(macrosArray, argument + 1, totalMacros, line_number) == OK_LABEL)
 	{
 		return OK_ADDRESSING_MODE_2; /* It passed! */
 	}
@@ -465,12 +489,12 @@ int is_valid_addressing(char* operation_name, int source_mode, int destination_m
  * @param total_macros The total number of macros currently defined.
  * @return VALID_OPERAND (1) if the operand is perfectly valid, INVALID_OPERAND (0) if there is a syntax error.
  */
-int validate_operand_by_mode(char* operand, int mode, OneMakro* macrosArray, int total_macros)
+int validate_operand_by_mode(char* operand, int mode, OneMakro* macrosArray, int total_macros,int line_number)
 {
 	if (mode == ADDRESSING_MODE_0)
 	{
 		/* Skip the '#' character by passing operand + 1 */
-		if (is_valid_integer(operand + 1) == INTEGER_ERROR)
+		if (is_valid_integer(operand + 1, line_number) == INTEGER_ERROR)
 		{
 			return INVALID_OPERAND; /* Return 0 if it's not a valid number */
 		}
@@ -478,7 +502,7 @@ int validate_operand_by_mode(char* operand, int mode, OneMakro* macrosArray, int
 	else if (mode == ADDRESSING_MODE_1)
 	{
 		/* Check if it's a valid label syntax */
-		if (is_it_a_valid_label(macrosArray, operand, total_macros) == LABEL_ERROR)
+		if (is_it_a_valid_label(macrosArray, operand, total_macros, line_number) == LABEL_ERROR)
 		{
 			return INVALID_OPERAND;
 		}
@@ -486,7 +510,7 @@ int validate_operand_by_mode(char* operand, int mode, OneMakro* macrosArray, int
 	else if (mode == ADDRESSING_MODE_2)
 	{
 		/* Check if it's a valid relative mode syntax (e.g., %LOOP) */
-		if (is_addressing_mode_2_valid(macrosArray, operand, total_macros) == ADDRESSING_MODE_2_ERROR)
+		if (is_addressing_mode_2_valid(macrosArray, operand, total_macros, line_number) == ADDRESSING_MODE_2_ERROR)
 		{
 			return INVALID_OPERAND;
 		}
@@ -496,12 +520,14 @@ int validate_operand_by_mode(char* operand, int mode, OneMakro* macrosArray, int
 		/* Check if it's a valid register (e.g., r1) */
 		if (is_it_a_register(operand) == REGISTER_ERROR)
 		{
+			printf("Error at line %d: Illegal register name '%s'. Use only valid registers (r0-r7).\n", line_number, operand);
 			return INVALID_OPERAND;
 		}
 	}
 	else
 	{
 		/* Safety net: If the mode is none of the above (e.g., -1) */
+		printf("Error at line %d: Unrecognized operand format.\n", line_number);
 		return INVALID_OPERAND;
 	}
 

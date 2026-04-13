@@ -1,31 +1,52 @@
-; 1. LINE EXCEEDS 80 CHARACTERS: This should trigger our new fgets logic!
-ThisLineIsWayTooLongAndItWillDefinitelyExceedTheEightyCharacterLimitWeDefinedInTheProjectSpecs: mov r1, r2
+; --- stress_test.as ---
+; קובץ סטרס לבדיקת שגיאות - הערות רק בתחילת שורה!
 
-; 2. LABEL TOO LONG: Over 31 characters (exactly 32 chars long)
-ThisLabelIsThirtyTwoCharactersLo: clr r1
+; --- קבוצה 1: שגיאות תוויות ---
+; שגיאה: תווית חייבת להתחיל באות אנגלית
+1BAD: .data 5                   
+; שגיאה: תווית היא מילה שמורה (פקודה)
+mov:  inc r1                    
+; שגיאה: תווית היא מילה שמורה (אוגר)
+r2:   dec r3                    
+; שגיאה: תווית ארוכה מ-31 תווים
+VERYLONGNAMETHATEXCEEDS31CHARS12: .data 1 
+; שגיאה: תווית מכילה תווים לא חוקיים
+BAD@LBL: stop                   
 
-; 3. INVALID LABEL NAMES: Using registers or instructions
-r1: add r2, r3
-mov: inc r5
+; --- קבוצה 2: שגיאות פסיקים ---
+; שגיאה: פסיק לפני המספר הראשון
+.data ,5, 6                     
+; שגיאה: פסיקים רצופים
+.data 5,,6                      
+; שגיאה: פסיק מיותר בסוף השורה
+.data 5, 6,                     
+; שגיאה: חסר פסיק בין אופרנדים
+mov r1 r2                       
+; שגיאה: טקסט מיותר אחרי האופרנדים (עוד אופרנד שלא צריך להיות)
+add r1, r2, r3                  
 
-; 4. ILLEGAL ADDRESSING MODES
-lea #5, r1
-add r1, #10
-jmp %r3
+; --- קבוצה 3: שגיאות תחביר של אופרנדים ---
+; שגיאה: חסרות ספרות אחרי הסימן
+prn #                           
+; שגיאה: תו לא חוקי בתוך מספר
+prn #5a                         
+; שגיאה: אוגר לא חוקי (יש רק r0-r7)
+inc r9                          
+; שגיאה: אחרי אחוז חייבת לבוא תווית חוקית
+jmp %1BAD                       
+; שגיאה: חסר אופרנד לאקסטרן
+.extern                         
 
-; 5. OPERAND COUNT ERRORS: Too many or too few
-not r1, r2
-cmp r1
+; --- קבוצה 4: שגיאות מיון (Addressing Modes) ---
+; שגיאה: מיון לא חוקי למקור (lea חייבת לקבל תווית, לא מספר)
+lea #5, r1                      
+; שגיאה: מיון לא חוקי ליעד (add לא יכולה לשמור תוצאה במספר)
+add r1, #10                     
 
-; 6. SYNTAX ERRORS: Missing commas or extra commas
-sub r1 r2
-.data 1,, 2
-.data 1 2 3
-
-; 7. STRING ERRORS: Missing closing quote and extraneous text
-.string "Unclosed string
-.string "Valid string" garbage
-
-; 8. DUPLICATE LABELS
-DupLabel: clr r1
-DupLabel: inc r2
+; --- קבוצה 5: שגיאות כלליות ---
+; שגיאה: טקסט מיותר (stop לא מקבלת אופרנדים)
+stop 5                          
+; שגיאה: חסר אופרנד לפקודה
+clr                             
+; שגיאה: פורמט מחרוזת לא חוקי (חסר מרכאות בסוף)
+.string "no closing quote
