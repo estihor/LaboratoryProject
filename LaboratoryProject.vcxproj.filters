@@ -39,6 +39,12 @@
     <ClCompile Include="instructions_handler.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="second_pass.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CreatingFiles.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LightBits.h">
@@ -60,6 +66,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="instructions_handler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="second_pass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CreatingFiles.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

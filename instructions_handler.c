@@ -370,7 +370,7 @@ void encode_operand(char* operand, int mode, int* IC, int line_number, Assembler
     {
         /* Register. Skip the 'r' and push to the correct bits. */
         /* Note: Ensure push_register knows exactly where to push the bits! */
-        machine_code = push_register(operand + 1);
+        machine_code = push_register(atoi(operand + 1));
         add_code_word(*IC, machine_code, NULL, line_number, state);
     }
 

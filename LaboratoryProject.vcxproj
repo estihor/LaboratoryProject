@@ -123,22 +123,26 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CreatingFiles.c" />
     <ClCompile Include="first_pass.c" />
     <ClCompile Include="instructions_handler.c" />
     <ClCompile Include="LightBits.c" />
     <ClCompile Include="memory_manager.c" />
     <ClCompile Include="Pre_Assembler.c" />
     <ClCompile Include="scan_lines.c" />
+    <ClCompile Include="second_pass.c" />
     <ClCompile Include="TheMainPart.c" />
     <ClCompile Include="validations.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CreatingFiles.h" />
     <ClInclude Include="first_pass.h" />
     <ClInclude Include="instructions_handler.h" />
     <ClInclude Include="LightBits.h" />
     <ClInclude Include="memory_manager.h" />
     <ClInclude Include="Pre_Assembler.h" />
     <ClInclude Include="scan_lines.h" />
+    <ClInclude Include="second_pass.h" />
     <ClInclude Include="validations.h" />
   </ItemGroup>
   <ItemGroup>
