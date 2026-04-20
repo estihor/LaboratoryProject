@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include "second_pass.h"
 #include "memory_manager.h"
+
 unsigned short Push_Bit_For_Letter_extraction(unsigned short REA_number)
 {
     return (REA_number >> 12);
@@ -112,7 +113,7 @@ void Creating_ob_File(CodeImage* CodeImageArr, int IC, DataImage* DataImageArr, 
     /* --- שלב 3: הדפסת מערך הנתונים (אם יש כזה) --- */
     for (i = 0; i < DC; i++) {
         /* בנתונים האות היא תמיד 'A' כי הם מוחלטים, אז מדפיסים אותה ישירות */
-        fprintf(file, "%04d %03X A\n", DataImageArr[i].MemoryAddress, (DataImageArr[i].machine_code & 0xFFF));
+        fprintf(file, "%04d %03X A\n", (100 + IC + i), (DataImageArr[i].machine_code & 0xFFF));
     }
 
     /* סוגרים את הקובץ בסיום */

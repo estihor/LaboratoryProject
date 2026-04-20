@@ -8,7 +8,7 @@
  */
 unsigned short push_opcode(unsigned int opcode)
 {
-	return opcode << 8;
+    return (opcode & 0xF) << 8;
 }
 /*
  * Function: push_funct
@@ -22,7 +22,7 @@ unsigned short push_opcode(unsigned int opcode)
 
 unsigned short push_funct(unsigned int funct)
 {
-    return  funct << 4;
+    return (funct & 0xF) << 4;
 }
 
 
@@ -40,18 +40,25 @@ unsigned short push_register(int register_num)
  * Function: push_source_mode
  * Receives the source addressing mode and shifts it to bits 2-3.
  */
-unsigned short push_source_mode(unsigned int mode)
+unsigned short push_source_mode(int mode)
 {
-    return mode << 2;
+    if (mode == -1) {
+        return 0; /* אם אין אופרנד, אל תוסיף כלום למילה */
+    }
+    return (mode & 0x3) << 2;
 }
 
 /*
  * Function: push_dest_mode
  * Receives the destination addressing mode and places it in bits 0-1.
  */
-unsigned short push_destination_mode(unsigned int mode)
+unsigned short push_destination_mode(int mode)
 {
-    /* No shift needed because it sits at the very beginning (bits 0-1) */
-    return mode;
+        if (mode == -1) 
+        {
+            return 0; /* אם אין אופרנד, אל תוסיף כלום למילה */
+        }
+        return (mode & 0x3);
+    
 }
 

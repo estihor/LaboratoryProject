@@ -33,7 +33,7 @@ void looking_for_entry(label* labelsArr, FILE* amFile, int labelsArrLength, char
                 }
                 else
                 {
-                    printf("Error ! Entry label '%s' not defined in file '%s' in line %d ", word2, FileName, LineCounter);
+                    printf("Error in line %d: Entry label '%s' not defined\n", LineCounter, word2);
                     *error_flag = 1;
                 }
             }
@@ -47,7 +47,7 @@ void looking_for_entry(label* labelsArr, FILE* amFile, int labelsArrLength, char
                 }
                 else
                 {
-                    printf("Error ! Entry label '%s' not defined in file '%s' in line %d ", word2, FileName, LineCounter);
+                    printf("Error in line %d: Entry label '%s' not defined\n", LineCounter, word3);
                     *error_flag = 1;
                 }
             }
@@ -95,7 +95,7 @@ void Complete_Table(label* labelsArr, CodeImage* CodeImageArr, int labelsArrLeng
                 {
                     if (labelsArr[index].is_extern == 1)
                     {
-                        printf("Error in %s:%d: The Addressing_method is inappropriate  to extern label\n", FileName, CodeImageArr[i].the_line_of_the_label);
+                        printf("Error in line %d: The addressing method is inappropriate for an extern label\n", CodeImageArr[i].the_line_of_the_label);
                         *error_flag = 1;
                     }
                     else
@@ -119,7 +119,7 @@ void Complete_Table(label* labelsArr, CodeImage* CodeImageArr, int labelsArrLeng
             }
             else
             {
-                (printf("Error in %s:%d: label '%s' not found\n", FileName, CodeImageArr[i].the_line_of_the_label, CodeImageArr[i].missing_label));
+                printf("Error in line %d: label '%s' not found\n", CodeImageArr[i].the_line_of_the_label, CodeImageArr[i].missing_label);
                 *error_flag = 1;
             }
         }

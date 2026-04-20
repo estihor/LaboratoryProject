@@ -148,6 +148,8 @@
   <ItemGroup>
     <None Include="bad_test.as" />
     <None Include="good_test.as" />
+    <None Include="pass2_errors.as" />
+    <None Include="pass2_perfect.as" />
     <None Include="README.md" />
     <None Include="test_macro_logic.as" />
   </ItemGroup>

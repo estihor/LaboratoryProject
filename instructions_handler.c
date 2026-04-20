@@ -353,7 +353,7 @@ void encode_operand(char* operand, int mode, int* IC, int line_number, Assembler
     if (mode == ADDRESSING_MODE_0)
     {
         /* Skip the '#' and convert the string to an integer */
-        machine_code = (unsigned short)atoi(operand + 1);
+        machine_code = ((unsigned short)atoi(operand + 1)) & 0xFFF;
         add_code_word(*IC, machine_code, NULL, line_number, state);
     }
     else if (mode == ADDRESSING_MODE_1)
@@ -364,7 +364,7 @@ void encode_operand(char* operand, int mode, int* IC, int line_number, Assembler
     else if (mode == ADDRESSING_MODE_2)
     {
         /* Relative label. Skip the '%' character and save the label name. */
-        add_code_word(*IC, 0, operand + 1, line_number, state);
+        add_code_word(*IC, 0, operand , line_number, state);
     }
     else if (mode == ADDRESSING_MODE_3)
     {
