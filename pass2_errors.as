@@ -1,12 +1,21 @@
-
-; --- pass2_errors.as ---
-; קובץ שגיאות שמיועד להיתפס רק במעבר השני
-
-.entry FAKELABEL
-.extern MYEXT
-
-MAIN:   mov r1, GHOSTLABEL
-        bne %MYEXT
-        stop
-
-MYDATA: .data 5, 6
+MAIN:      add r3, LIST 
+           mcro GEN_MC  
+           lea STR, r6 
+           inc r6 
+           mov r3, K 
+mcroend  
+LOOP:  prn #48 
+GEN_MC 
+  sub r1, r4 
+  bne END 
+  cmp val1, #-6 
+  bne %END 
+  dec K 
+           jmp %LOOP      
+END:  stop 
+STR:             .string "abcd" 
+LIST:             .data 6, -9 
+                        .data -100 
+.entry  K 
+K:             .data 31 
+.extern  val1

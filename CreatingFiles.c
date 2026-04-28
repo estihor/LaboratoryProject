@@ -95,7 +95,7 @@ void Creating_ob_File(CodeImage* CodeImageArr, int IC, DataImage* DataImageArr, 
     }
 
     /* --- שלב 1: הדפסת שורת הכותרת --- */
-    fprintf(file, "%d %d\n", IC, DC);
+    fprintf(file, "      %d %d\n", IC, DC);
 
     /* --- שלב 2: הדפסת מערך הקוד --- */
     for (i = 0; i < IC; i++) {
