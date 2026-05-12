@@ -45,6 +45,12 @@
     <ClCompile Include="CreatingFiles.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="directives_handler.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="operands_validator.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LightBits.h">
@@ -72,6 +78,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CreatingFiles.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="directives_handler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="operands_validator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -15,6 +15,7 @@
 #include "memory_manager.h"
 #include "LightBits.h"
 #include "instructions_handler.h"
+#include "operands_validator.h"
 
  /* Constants to avoid magic numbers */
 #define OK_OPERATION 1

@@ -107,6 +107,7 @@ int main(int argc, char* argv[])
                 Creating_ob_File(assembler_data.code_image, assembler_data.code_count, assembler_data.data_image, assembler_data.data_count, argv[i]);
                 Creating_ent_File(assembler_data.symbol_table, assembler_data.symbol_count, argv[i]);
                 Creating_ext_File(assembler_data.code_image, assembler_data.code_count, argv[i], assembler_data.symbol_table, assembler_data.symbol_count);
+                printf("Success: Compilation completed perfectly! Output files generated.\n");
             }
         }
 

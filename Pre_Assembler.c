@@ -4,20 +4,20 @@
 #include <stdlib.h>
 #include "Pre_Assembler.h"
 #include "validations.h"
-#define MAXIMUM_LINE_LENGTH 82       /* אורך שורה מקסימלי כולל תווים מיוחדים */
-#define MAXIMUM_WORD_LENGTH 82       /* אורך מקסימלי למילה בודדת (שם מקרו/פקודה) */
-#define  MACRO_NOT_FOUND -1              /* כשלא נמצא מקרו במערך */
-#define SUCCESS 1                 /* סימון להצלחה (למשל בוולידציה) */
-#define FAILURE 0
-#define Memory_allocation_failed 1
-#define YES 1               
-#define  NO 0
-#define STRCMP_SUCCESS 0
-#define EXPECTED_MACRO_DEF_NUM_WORD 2      /* בשורה כמו: mcro MY_MACRO */
-#define EXPECTED_NUM_WORDS_MACRO_CALL 1     /* בשורה של קריאה למקרו בלבד */
-#define EXPECTED_NUM_WORDS_ENDMACRO 1 
-#define Initial_macro_size 1     /* גודל התחלתי להקצאת תוכן מקרו */
-#define ERORR_IN_MACRO_DEFINITION 1
+#define MAXIMUM_LINE_LENGTH 82  /* Max chars in a line */
+#define MAXIMUM_WORD_LENGTH 82  /* Max chars for a single word extraction */
+#define  MACRO_NOT_FOUND -1  /* Returned when a word is not found in the macro array */
+#define SUCCESS 1 /* Represents a successful operation or validation */
+#define FAILURE 0 /* Represents a failed operation or validation */
+#define Memory_allocation_failed 1 /* Represents a memory allocation failure */
+#define YES 1  /* Boolean equivalent for TRUE if is in macro */             
+#define  NO 0  /* Boolean equivalent for FALSE if is not in macro */
+#define STRCMP_SUCCESS 0 /* The value returned by strcmp() when strings are identical */
+#define EXPECTED_MACRO_DEF_NUM_WORD 2     /* Expected words in definition of macro line  */
+#define EXPECTED_NUM_WORDS_MACRO_CALL 1   /* Enforces that a macro call line contains exactly 1 word (no trailing garbage) */
+#define EXPECTED_NUM_WORDS_ENDMACRO 1 /* Expected words in the macro closing line ("mcroend") */
+#define Initial_macro_size 1     /* The 1 byte needed for the null-terminator ('\0') when allocating/resizing content */
+#define ERORR_IN_MACRO_DEFINITION 1 /* Flag value indicating a syntax error was found */
 /*
  * Safely frees all dynamically allocated memory used by the macros array.
  * Performs a deep free, releasing the memory for macro names, contents, and the array itself.
@@ -26,7 +26,7 @@
  */
 void Release_the_macrosArray(OneMakro* macrosArray, int total_macros_found)
 {
-    int i; /* הכרזת משתנים חובה להיות השורה הראשונה בפונקציה! */
+    int i;
 
     if (macrosArray == NULL)
     {
@@ -44,9 +44,7 @@ void Release_the_macrosArray(OneMakro* macrosArray, int total_macros_found)
         {
             free(macrosArray[i].Makroname);
         }
-    } /* כאן מסתיימת הלולאה */
-
-    /* רק אחרי שכל התאים נוקו, משחררים את המערך הגדול! */
+    }
     free(macrosArray);
 }
 /*
@@ -68,7 +66,8 @@ void Creates_the_file_am(OneMakro* macrosArray, int total_macros_found, FILE* as
     while (fgets(line, sizeof(line), asFile) != NULL)
     {
         if (sscanf(line, "%81s", IsITAMakroWord) == 1)
-        {   /* Skip the macro definition opening line */
+        {
+            /* Skip the macro definition opening line */
             if (strcmp(IsITAMakroWord, "mcro") == STRCMP_SUCCESS)
             {
                 InMacro = YES;
@@ -153,7 +152,6 @@ int is_it_a_macro(OneMakro* macrosArray, char* IsITAMakroWord, int totalMacros)
     }
     return MACRO_NOT_FOUND;
 }
-
 FILE* create_file_with_extension(char* baseFileName, char extension, char* mode)
 {
     int len;
@@ -195,70 +193,104 @@ void adding_lines_of_macro_to_arr(OneMakro* currentMacroArr, char* line)
 /*
  * Scans the source file to find macro definitions (mcro ... endmcro).
  * Allocates memory dynamically and builds an array containing the names and contents of all valid macros.
- * * @param asFile The source assembly file (.as) to scan.
+ * @param asFile The source assembly file (.as) to scan.
  * @param MacroCountRequiredForLoop Pointer to an integer to store the total number of macros found.
+ * @param fileName The name of the file being processed.
+ * @param errorFlag Pointer to the global error flag for the pre-assembler phase.
  * @return A pointer to the dynamically allocated array of macros (OneMakro*).
  */
 OneMakro* Macro_word_search(FILE* asFile, int* MacroCountRequiredForLoop, char* fileName, int* errorFlag)
 {
-    char line[MAXIMUM_LINE_LENGTH] = { 0 };          /* Buffer to store the current line being read */
+    char line[MAXIMUM_LINE_LENGTH] = { 0 };           /* Buffer to store the current line being read */
     char IsITAMakroWord[MAXIMUM_WORD_LENGTH] = { 0 }; /* Buffer to extract the first word of the line */
-    char makroName[MAXIMUM_WORD_LENGTH] = { 0 };     /* Buffer to store the extracted macro name */
+    char makroName[MAXIMUM_WORD_LENGTH] = { 0 };      /* Buffer to store the extracted macro name */
     OneMakro* macro_array = NULL;
-    int  LineCounter = 0;
+    int LineCounter = 0;
     int macroCounter = 0;
     int insideMacro = NO; /* Flag indicating if we are currently inside a macro definition */
-    unsigned int opcode;/*For the function find_opcode_and_funct */
-    unsigned int funct; /*For the function find_opcode_and_funct */
+    unsigned int opcode;  /* For the function find_opcode_and_funct */
+    unsigned int funct;   /* For the function find_opcode_and_funct */
+
     /* Read the file line by line until the end */
     while (fgets(line, sizeof(line), asFile) != NULL)
     {
         LineCounter++;
         /* Attempt to extract the first word from the line */
         if (sscanf(line, "%81s", IsITAMakroWord) == 1)
-        {   /* Case 1: Found the start of a new macro definition */
+        {
+            
+
+            /* Case 1: Found the start of a new macro definition */
             if (insideMacro == NO && strcmp(IsITAMakroWord, "mcro") == STRCMP_SUCCESS)
             {
-                if (sscanf(line, "%*s %s", makroName) == 1) {
-                    /* Validate that the macro name is not a reserved word (register/instruction)
-                       and that there is no trailing garbage after the name */
-                    if (is_it_a_register(makroName) == FAILURE && is_it_an_instruction(makroName) == FAILURE
-                        && is_it_an_operation_and_find_opcode_and_funct(makroName, &opcode, &funct) == FAILURE && No_word_after_macro(line, EXPECTED_MACRO_DEF_NUM_WORD) == SUCCESS)
+                if (sscanf(line, "%*s %s", makroName) == 1)
+                {
+                    /* Check the syntax first to avoid redundant error prints */
+                    if (is_valid_name_syntax(makroName, 1, LineCounter, "mcro") == SUCCESS)
                     {
-                        /* Allocate memory for the new macro and update the counter */
-                        Allocating_memory_for_the_macro_array(makroName, &macroCounter, &macro_array);
-                        insideMacro = YES;/* Turn on the macro flag */
-                        continue;
+                        /* Syntax is valid, check for reserved words and trailing text */
+                        if (is_it_a_register(makroName) == FAILURE &&
+                            is_it_an_instruction(makroName) == FAILURE &&
+                            is_instruction_without_dot(makroName) == FAILURE &&
+                            is_it_an_operation_and_find_opcode_and_funct(makroName, &opcode, &funct) == FAILURE &&
+                            No_word_after_macro(line, EXPECTED_MACRO_DEF_NUM_WORD) == SUCCESS)
+                        {
+                            /* Valid macro definition, allocate memory */
+                            Allocating_memory_for_the_macro_array(makroName, &macroCounter, &macro_array);
+                            insideMacro = YES;
+                            continue;
+                        }
+                        else
+                        {
+                            /* Valid syntax but conflicts with a reserved word or contains extraneous text */
+                            *errorFlag = ERORR_IN_MACRO_DEFINITION;
+
+                            if (is_it_a_register(makroName) == SUCCESS ||
+                                is_it_an_instruction(makroName) == SUCCESS ||
+                                is_instruction_without_dot(makroName) == SUCCESS ||
+                                is_it_an_operation_and_find_opcode_and_funct(makroName, &opcode, &funct) == SUCCESS)
+                            {
+                                printf("Error in line %d: Invalid macro name '%s' (Reserved word).\n", LineCounter, makroName);
+                            }
+                            else if (No_word_after_macro(line, EXPECTED_MACRO_DEF_NUM_WORD) == FAILURE)
+                            {
+                                printf("Error in line %d: extraneous text after mcro definition.\n", LineCounter);
+                            }
+                        }
                     }
                     else
                     {
-                        printf("\nError in file %s, line %d: Invalid macro name '%s' or extraneous text after definition.\n", fileName, LineCounter, makroName);
+                        /* Syntax validation failed. The error is printed inside is_valid_name_syntax. */
                         *errorFlag = ERORR_IN_MACRO_DEFINITION;
-                        return NULL;
                     }
-                }
-                else
-                {
-                    printf("Error in file %s, line %d: Missing macro name after 'mcro'.\n", fileName, LineCounter);
-                    *errorFlag = ERORR_IN_MACRO_DEFINITION;
-                    return NULL;
-                }
-            }
-            /* Case 2: Found the end of the current macro definition */
-            if (insideMacro == YES && strcmp(IsITAMakroWord, "mcroend") == STRCMP_SUCCESS)
-            {
-                if ((No_word_after_macro(line, EXPECTED_NUM_WORDS_ENDMACRO) == SUCCESS))
-                {
-                    insideMacro = NO; /* מעדכנים דגל שיצאנו */
+
                     continue;
                 }
                 else
                 {
-                    printf("Error in file %s, line %d: Extraneous text after 'endmcro'.\n", fileName, LineCounter);
+                    printf("Error in line %d: Missing macro name after 'mcro'.\n", LineCounter);
                     *errorFlag = ERORR_IN_MACRO_DEFINITION;
-                    return NULL;
+                    continue;
                 }
             }
+
+            /* Case 2: Found the end of the current macro definition */
+            if (strcmp(IsITAMakroWord, "mcroend") == STRCMP_SUCCESS)
+            {
+                if ((No_word_after_macro(line, EXPECTED_NUM_WORDS_ENDMACRO) == SUCCESS))
+                {
+                    insideMacro = NO;
+                    continue;
+                }
+                else
+                {
+                    printf("Error in line %d: Extraneous text after 'mcroend'.\n", LineCounter);
+                    *errorFlag = ERORR_IN_MACRO_DEFINITION;
+                    insideMacro = NO;
+                    continue;
+                }
+            }
+
             /* Case 3: We are inside a valid macro, so add the line to its content */
             if (insideMacro == YES)
             {
@@ -267,11 +299,9 @@ OneMakro* Macro_word_search(FILE* asFile, int* MacroCountRequiredForLoop, char* 
             }
         }
     }
-    *MacroCountRequiredForLoop = macroCounter; /*Return the total number of valid macros found to the main function*/
+    *MacroCountRequiredForLoop = macroCounter; /* Return the total number of valid macros found to the main function */
     return macro_array;
 }
-
-
 /*
  * Allocates and initializes memory for a newly found macro in the dynamic array.
  * Increases the array size and allocates memory for the macro's name and content strings.
@@ -279,32 +309,32 @@ OneMakro* Macro_word_search(FILE* asFile, int* MacroCountRequiredForLoop, char* 
  * @param count Pointer to the current count of macros (will be incremented).
  * @param arr Pointer to the dynamic array of macros to be reallocated.
  */
-    void Allocating_memory_for_the_macro_array(char* makroName, int* count, OneMakro * *arr)
+void Allocating_memory_for_the_macro_array(char* makroName, int* count, OneMakro** arr)
+{
+    *count = *count + 1; /* Increment the array size counter*/
+        /* Reallocate memory for the main array to fit the new macro struct */
+    OneMakro* temp = (OneMakro*)realloc(*arr, (*count) * sizeof(OneMakro));
+    if (temp == NULL)
     {
-        *count = *count + 1; /* Increment the array size counter* /
-            /* Reallocate memory for the main array to fit the new macro struct */
-            OneMakro * temp = (OneMakro*)realloc(*arr, (*count) * sizeof(OneMakro));
-        if (temp == NULL)
-        {
-            printf("An attempt to allocate memory failed");
-            exit(Memory_allocation_failed);
-        }
-        *arr = temp;
-        /* Allocate memory for the macro's name string (+1 for the null terminator) */
-        (*arr)[*count - 1].Makroname = (char*)malloc(((int)strlen(makroName) + 1) * sizeof(char));
-        if ((*arr)[*count - 1].Makroname == NULL)
-        {
-            printf("An attempt to allocate memory failed");
-            exit(Memory_allocation_failed);
-        }
-        /* Copy the extracted name into the newly allocated memory */
-        strcpy((*arr)[*count - 1].Makroname, makroName);
-        /* Allocate initial memory for the macro's content (start as an empty string) */
-        (*arr)[*count - 1].MakroContent = (char*)malloc(Initial_macro_size * sizeof(char));
-        if ((*arr)[*count - 1].MakroContent == NULL)
-        {
-            printf("An attempt to allocate memory failed");
-            exit(Memory_allocation_failed);
-        }
-        (*arr)[*count - 1].MakroContent[0] = '\0';
+        printf("An attempt to allocate memory failed");
+        exit(Memory_allocation_failed);
     }
+    *arr = temp;
+    /* Allocate memory for the macro's name string (+1 for the null terminator) */
+    (*arr)[*count - 1].Makroname = (char*)malloc(((int)strlen(makroName) + 1) * sizeof(char));
+    if ((*arr)[*count - 1].Makroname == NULL)
+    {
+        printf("An attempt to allocate memory failed");
+        exit(Memory_allocation_failed);
+    }
+    /* Copy the extracted name into the newly allocated memory */
+    strcpy((*arr)[*count - 1].Makroname, makroName);
+    /* Allocate initial memory for the macro's content (start as an empty string) */
+    (*arr)[*count - 1].MakroContent = (char*)malloc(Initial_macro_size * sizeof(char));
+    if ((*arr)[*count - 1].MakroContent == NULL)
+    {
+        printf("An attempt to allocate memory failed");
+        exit(Memory_allocation_failed);
+    }
+    (*arr)[*count - 1].MakroContent[0] = '\0';
+}
