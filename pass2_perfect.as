@@ -1,22 +1,8 @@
-.entry  LIST 
-.extern  W 
-MAIN:         add   r3, LIST 
-LOOP:         prn   #48 
-              lea   W, r6 
-              inc   r6 
-              mov   r3, K 
-              sub   r1, r4 
-              bne   END 
-              cmp   K, #-6 
-              bne   %END 
-              dec   W 
-.entry  MAIN 
-              jmp   %LOOP      
-              add   L3, L3 
-END:          stop 
- 
-STR:         .string "abcd"
-LIST:        .data   6, -9 
-             .data   -100 
-K:           .data    31 
-.extern  L3 
+.entry MISSINGENTRY
+MAIN:   mov r1, r2
+1BAD:   inc r3
+        jmp GHOST
+        add r1, r2,,
+        bne FAKELABEL,
+MAIN:   clr r4
+.data 5, 6, 7

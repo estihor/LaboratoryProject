@@ -164,10 +164,9 @@ int process_of_string(char* line, int index, int* DC, int line_number, Assembler
     index = skip_the_spaces(line, index);
 
     /* Step 2: Validate the string format */
-    if (is_str_valid(line, index) != OK_STRING)
+    if (is_str_valid(line, index, line_number) != OK_STRING)
     {
-        /* Print a specific error if validation fails */
-        printf("Error at line %d: Invalid string format.\n", line_number);
+       
         return STRING_ERROR;
     }
 
@@ -199,6 +198,7 @@ int process_and_encode_data(char* line, int index, int* DC, int line_number, Ass
     /* Step 1: Skip spaces after ".data" */
     index = skip_the_spaces(line, index);
 
+   
     /* Check for an empty data directive */
     if (line[index] == '\n' || line[index] == '\0') {
         printf("Error at line %d: Missing data parameters.\n", line_number);
@@ -408,6 +408,8 @@ int first_pass(FILE* amFile, OneMakro* macrosArray, int total_macros_found, Asse
         else
         {
             label_flag = 0;
+
+            int skip_rest_of_line = 0;
             /* Skip leading spaces to find the first meaningful character */
             line_index = skip_the_spaces(line, 0);
 
@@ -430,6 +432,7 @@ int first_pass(FILE* amFile, OneMakro* macrosArray, int total_macros_found, Asse
                     if (check_label_validity(the_first_word, macrosArray, total_macros_found, line_number, state) == 1)
                     {
                         error_flag = 1; /* Helper found an error, turn on the error flag */
+                        skip_rest_of_line = 1;
                     }
                     else
                     {
@@ -447,58 +450,70 @@ int first_pass(FILE* amFile, OneMakro* macrosArray, int total_macros_found, Asse
                     strcpy(the_instruction, the_first_word);
                 }
 
+                if (skip_rest_of_line == 0)
+                {
+                    if (strcmp(the_instruction, ".string") == 0)
+                    {
+                        /* Add the valid label to the symbol table as a data symbol */
+                        if (label_flag == 1)
+                        {
+                            add_symbol(the_first_word, DC, 0, 1, 0, 0, state);
+                        }
+                        line_index = skip_the_spaces(line, line_index);
 
-                if (strcmp(the_instruction, ".string") == 0)
-                {
-                    /* Add the valid label to the symbol table as a data symbol */
-                    if (label_flag == 1)
-                    {
-                        add_symbol(the_first_word, DC, 0, 1, 0, 0, state);
-                    }
-                    line_index = skip_the_spaces(line, line_index);
-
-                    if (process_of_string(line, line_index, &DC, line_number, state) == STRING_ERROR)
-                    {
-                        error_flag = 1;
-                    }
-                }
-
-                /* Check if it's a data directive */
-                else if (strcmp(the_instruction, ".data") == 0)
-                {
-                    /* Add the valid label to the symbol table as a data symbol */
-                    if (label_flag == 1)
-                    {
-                        add_symbol(the_first_word, DC, 0, 1, 0, 0, state);
-                    }
-                    line_index = skip_the_spaces(line, line_index);
-
-                    if (process_and_encode_data(line, line_index, &DC, line_number, state) == DATA_ERROR)
-                    {
-                        error_flag = 1;
-                    }
-                }
-                else if (strcmp(the_instruction, ".extern") == 0)
-                {
-                    if (process_of_extern(line, line_index, label_flag, line_number, macrosArray, total_macros_found, state) == EXTERN_ERROR)
-                    {
-                        error_flag = 1;
-                    }
-                }
-                else if (strcmp(the_instruction, ".entry") == 0)
-                {
-                    if (process_of_entry(line, line_index, label_flag, line_number, macrosArray, total_macros_found) == ENTRY_ERROR)
-                    {
-                        error_flag = 1;
-                    }
-                }
-                else
-                {
-                    if (process_machine_instruction(line, line_index, label_flag, line_number, the_first_word, the_instruction, macrosArray, total_macros_found, &IC, state) == SYNTAX_ERROR)
-                    {
-                        error_flag = 1;
+                        if (process_of_string(line, line_index, &DC, line_number, state) == STRING_ERROR)
+                        {
+                            error_flag = 1;
+                        }
                     }
 
+                    /* Check if it's a data directive */
+                    else if (strcmp(the_instruction, ".data") == 0)
+                    {
+                        /* Add the valid label to the symbol table as a data symbol */
+                        if (label_flag == 1)
+                        {
+                            add_symbol(the_first_word, DC, 0, 1, 0, 0, state);
+                        }
+                        line_index = skip_the_spaces(line, line_index);
+
+                        if (process_and_encode_data(line, line_index, &DC, line_number, state) == DATA_ERROR)
+                        {
+                            error_flag = 1;
+                        }
+                    }
+                    else if (strcmp(the_instruction, ".extern") == 0)
+                    {
+                        if (process_of_extern(line, line_index, label_flag, line_number, macrosArray, total_macros_found, state) == EXTERN_ERROR)
+                        {
+                            error_flag = 1;
+                        }
+                    }
+                    else if (strcmp(the_instruction, ".entry") == 0)
+                    {
+                        if (process_of_entry(line, line_index, label_flag, line_number, macrosArray, total_macros_found) == ENTRY_ERROR)
+                        {
+                            error_flag = 1;
+                        }
+                    }
+
+                    else if (the_instruction[0] == '.')
+                    {
+
+                        printf("Error at line %d: Illegal directive name '%s'.\n", line_number, the_instruction);
+                        error_flag = 1;
+                    }
+
+
+                    else
+                    {
+                        if (process_machine_instruction(line, line_index, label_flag, line_number, the_first_word, the_instruction, macrosArray, total_macros_found, &IC, state) == SYNTAX_ERROR)
+                        {
+                            error_flag = 1;
+                        }
+
+
+                    }
 
                 }
             }

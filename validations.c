@@ -167,7 +167,8 @@ int is_it_a_register(char* name)
 
 }
 
-char* ArrInstructions[NUM_OF_INSTRUCTIONS] = {
+char* ArrInstructions[NUM_OF_INSTRUCTIONS] =
+{
 	".string",".data",".extern" , ".entry",
 };
 
@@ -196,19 +197,43 @@ int is_it_an_instruction(char* name)
 }
 
 /**
-* Checks if a given string is a reserved word in the assembly language.
-* A reserved word can be an operation name (e.g., mov, add), a register (e.g., r1, r2),
-* an instruction directive (e.g., .data, .string), or a previously defined macro.
-*
-* @param macrosArray A pointer to the array of currently defined macros.
-* @param name The string to be checked.
-* @param totalMacros The number of macros defined so far.
-* @return 1 if the string is a reserved word (cannot be used as a label), 0 otherwise.
-*/
+ * Checks if a given string matches an instruction directive WITHOUT the dot
+ * (e.g., "data" instead of ".data", "string" instead of ".string").
+ *
+ * @param name The string to check.
+ * @return 1 if it matches a directive name without a dot, 0 otherwise.
+ */
+int is_instruction_without_dot(char* name)
+{
+	int i;
+
+	if (name == NULL || name[0] == '\0')
+		return 0;
+
+	/* Check for directives WITHOUT the dot (e.g., "data" instead of ".data") */
+	for (i = 0; i < NUM_OF_INSTRUCTIONS; i++)
+	{
+		/* ArrInstructions[i] + 1 skips the dot '.' */
+		if (strcmp(name, ArrInstructions[i] + 1) == 0)
+		{
+			return 1; /* Match found! */
+		}
+	}
+	return 0; /* No match */
+}
+/**
+ * Checks if a given string is a reserved word in the assembly language.
+ * A reserved word can be an operation name (e.g., mov, add), a register (e.g., r1, r2),
+ * an instruction directive (e.g., .data, .string), or a previously defined macro.
+ *
+ * @param macrosArray A pointer to the array of currently defined macros.
+ * @param name The string to be checked.
+ * @param totalMacros The number of macros defined so far.
+ * @return 1 if the string is a reserved word (cannot be used as a label), 0 otherwise.
+ */
 int is_reserved_word(OneMakro* macrosArray, char* name, int totalMacros)
 {
 	unsigned int num;
-	int i;
 
 	/* Safety check for empty input */
 	if (name == NULL || name[0] == '\0')
@@ -218,23 +243,14 @@ int is_reserved_word(OneMakro* macrosArray, char* name, int totalMacros)
 	if (is_it_a_register(name) == OK_REGISTER ||
 		is_it_an_operation_and_find_operands(name, &num) == OK_OPERANDS ||
 		is_it_an_instruction(name) == OK_INSTRUCTION ||
-		is_it_a_macro(macrosArray, name, totalMacros) != MACRO_ERROR)
+		is_it_a_macro(macrosArray, name, totalMacros) != MACRO_ERROR ||
+		is_instruction_without_dot(name) == 1) /* <--- הקריאה לפונקציה החדשה! */
 	{
 		return 1; /* It is a reserved word */
 	}
 
-	/* Check for directives WITHOUT the dot (e.g., "data" instead of ".data") */
-	for (i = 0; i < NUM_OF_INSTRUCTIONS; i++)
-	{
-		/* ArrInstructions[i] + 1 skips the dot '.' */
-		if (strcmp(name, ArrInstructions[i] + 1) == 0)
-		{
-			return 1; /* It's a reserved word! */
-		}
-	}
 	return 0; /* Not a reserved word, potentially a valid label name */
 }
-
 
 
 /**
@@ -534,3 +550,7 @@ int validate_operand_by_mode(char* operand, int mode, OneMakro* macrosArray, int
 	/* If we passed all the checks without returning an error, the operand is valid! */
 	return VALID_OPERAND;
 }
+
+
+
+

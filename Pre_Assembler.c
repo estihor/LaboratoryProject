@@ -74,7 +74,7 @@ void Creates_the_file_am(OneMakro* macrosArray, int total_macros_found, FILE* as
                 InMacro = YES;
                 continue;
             }
-            if (strcmp(IsITAMakroWord, "endmcro") == STRCMP_SUCCESS) /* Skip the macro definition closing line */
+            if (strcmp(IsITAMakroWord, "mcroend") == STRCMP_SUCCESS) /* Skip the macro definition closing line */
             {
                 InMacro = NO;
                 continue;
@@ -219,7 +219,7 @@ OneMakro* Macro_word_search(FILE* asFile, int* MacroCountRequiredForLoop, char* 
         {   /* Case 1: Found the start of a new macro definition */
             if (insideMacro == NO && strcmp(IsITAMakroWord, "mcro") == STRCMP_SUCCESS)
             {
-                if (sscanf(line, "mcro %s", makroName) == 1) {
+                if (sscanf(line, "%*s %s", makroName) == 1) {
                     /* Validate that the macro name is not a reserved word (register/instruction)
                        and that there is no trailing garbage after the name */
                     if (is_it_a_register(makroName) == FAILURE && is_it_an_instruction(makroName) == FAILURE
@@ -232,7 +232,7 @@ OneMakro* Macro_word_search(FILE* asFile, int* MacroCountRequiredForLoop, char* 
                     }
                     else
                     {
-                        printf("Error in file %s, line %d: Invalid macro name '%s' or extraneous text after definition.\n", fileName, LineCounter, makroName);
+                        printf("\nError in file %s, line %d: Invalid macro name '%s' or extraneous text after definition.\n", fileName, LineCounter, makroName);
                         *errorFlag = ERORR_IN_MACRO_DEFINITION;
                         return NULL;
                     }
@@ -245,7 +245,7 @@ OneMakro* Macro_word_search(FILE* asFile, int* MacroCountRequiredForLoop, char* 
                 }
             }
             /* Case 2: Found the end of the current macro definition */
-            if (insideMacro == YES && strcmp(IsITAMakroWord, "endmcro") == STRCMP_SUCCESS)
+            if (insideMacro == YES && strcmp(IsITAMakroWord, "mcroend") == STRCMP_SUCCESS)
             {
                 if ((No_word_after_macro(line, EXPECTED_NUM_WORDS_ENDMACRO) == SUCCESS))
                 {

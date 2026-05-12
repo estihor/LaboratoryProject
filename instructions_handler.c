@@ -185,6 +185,13 @@ int process_one_operand(int line_number, char* line, int index, char* operation_
 
     /* --- PART 1: EXTRACTION --- */
     index = skip_the_spaces(line, index);
+
+    if (line[index] == ',')
+    {
+        printf("Error at line %d: Illegal comma before operand\n", line_number);
+        return SYNTAX_ERROR;
+    }
+
     index = cut_the_next_word(line, index, the_operand);
 
     if (strlen(the_operand) == 0)
@@ -194,11 +201,7 @@ int process_one_operand(int line_number, char* line, int index, char* operation_
     }
 
     index = skip_the_spaces(line, index);
-    if (line[index] != '\n' && line[index] != '\0')
-    {
-        printf("Error at line %d: Extraneous text after operand\n", line_number);
-        return SYNTAX_ERROR;
-    }
+    
 
     /* --- PART 2: CLASSIFICATION AND SYNTAX VALIDATION --- */
     dest_mode = what_is_the_addressing_mode(the_operand);
@@ -215,7 +218,13 @@ int process_one_operand(int line_number, char* line, int index, char* operation_
         return SYNTAX_ERROR;
     }
 
+    if (line[index] != '\n' && line[index] != '\0')
+    {
+        printf("Error at line %d: Extraneous text after operand\n", line_number);
+        return SYNTAX_ERROR;
+    }
     /* --- PART 4: ENCODING --- */
+
     encode_operation(opcode, funct, NO_OPERAND, dest_mode, IC, line_number, state);
     encode_operand(the_operand, dest_mode, IC, line_number, state);
 
@@ -225,7 +234,8 @@ int process_one_operand(int line_number, char* line, int index, char* operation_
 
 /**
  * process_two_operands - Validates and encodes instructions with 2 operands (e.g., mov, add).
- * Ensures correct comma separation, validates both operands, and encodes the resulting words.
+ * Parses the line from left to right, validating addressing modes for each operand,
+ * ensuring proper comma separation, checking for extraneous text, and finally encoding.
  *
  * @param line_number The current line number.
  * @param line The entire current line.
@@ -233,22 +243,28 @@ int process_one_operand(int line_number, char* line, int index, char* operation_
  * @param operation_name The name of the instruction (e.g., "mov").
  * @param macrosArray Pointer to the array of defined macros.
  * @param total_macros Total number of macros defined.
- * @param p_source_mode Pointer to return the source addressing mode.
- * @param p_dest_mode Pointer to return the destination addressing mode.
  * @param opcode The opcode of the operation.
  * @param funct The funct of the operation.
  * @param IC Pointer to the Instruction Counter.
+ * @param state Pointer to the AssemblerData state.
  * @return VALID_SYNTAX (1) if successful, SYNTAX_ERROR (0) otherwise.
  */
 int process_two_operands(int line_number, char* line, int index, char* operation_name, OneMakro* macrosArray, int total_macros, unsigned int opcode, unsigned int funct, int* IC, AssemblerData* state)
 {
     char first_operand[82] = { 0 };
     char second_operand[82] = { 0 };
-    int source_mode=0;
-    int dest_mode=0;
+    int source_mode = 0;
+    int dest_mode = 0;
+    int temp_index = 0;
 
-    /* --- PART 1: EXTRACTION AND COMMA CHECKING --- */
+    /* --- Extract and validate the source operand --- */
     index = skip_the_spaces(line, index);
+
+    if (line[index] == ',')
+    {
+        printf("Error at line %d: Illegal comma before the first operand\n", line_number);
+        return SYNTAX_ERROR;
+    }
     index = cut_the_next_word(line, index, first_operand);
 
     if (strlen(first_operand) == 0)
@@ -257,20 +273,59 @@ int process_two_operands(int line_number, char* line, int index, char* operation
         return SYNTAX_ERROR;
     }
 
+    source_mode = what_is_the_addressing_mode(first_operand);
+
+    if (validate_operand_by_mode(first_operand, source_mode, macrosArray, total_macros, line_number) == INVALID_OPERAND)
+    {
+        return SYNTAX_ERROR;
+    }
+
+    if (is_valid_addressing(operation_name, source_mode, NO_OPERAND) == TYPE_OF_OPERANDS_ERROR)
+    {
+        printf("Error at line %d: Illegal addressing mode for source operand in '%s'\n", line_number, operation_name);
+        return SYNTAX_ERROR;
+    }
+
+    /* --- Check for comma separation --- */
     index = check_and_skip_comma(line, index);
     if (index == -1)
     {
         printf("Error at line %d: Missing comma between operands\n", line_number);
         return SYNTAX_ERROR;
     }
+
+    /* Check for multiple consecutive commas strictly after the first valid comma */
+    temp_index = skip_the_spaces(line, index);
+    if (line[temp_index] == ',')
+    {
+        printf("Error at line %d: Multiple consecutive commas found\n", line_number);
+        return SYNTAX_ERROR;
+    }
+
+    /* --- Extract and validate the destination operand --- */
     index = skip_the_spaces(line, index);
     index = cut_the_next_word(line, index, second_operand);
+
     if (strlen(second_operand) == 0)
     {
         printf("Error at line %d: Missing destination operand after comma\n", line_number);
         return SYNTAX_ERROR;
     }
 
+    dest_mode = what_is_the_addressing_mode(second_operand);
+
+    if (validate_operand_by_mode(second_operand, dest_mode, macrosArray, total_macros, line_number) == INVALID_OPERAND)
+    {
+        return SYNTAX_ERROR;
+    }
+
+    if (is_valid_addressing(operation_name, NO_OPERAND, dest_mode) == TYPE_OF_OPERANDS_ERROR)
+    {
+        printf("Error at line %d: Illegal addressing mode for destination operand in '%s'\n", line_number, operation_name);
+        return SYNTAX_ERROR;
+    }
+
+    /* --- Check for extraneous text at the end of the line --- */
     index = skip_the_spaces(line, index);
     if (line[index] != '\n' && line[index] != '\0')
     {
@@ -278,30 +333,7 @@ int process_two_operands(int line_number, char* line, int index, char* operation
         return SYNTAX_ERROR;
     }
 
-    /* --- PART 2: CLASSIFICATION AND SYNTAX VALIDATION --- */
-    source_mode = what_is_the_addressing_mode(first_operand);
-    dest_mode = what_is_the_addressing_mode(second_operand);
-
-    if (validate_operand_by_mode(first_operand, source_mode, macrosArray, total_macros, line_number) == INVALID_OPERAND)
-    {
-        
-        return SYNTAX_ERROR;
-    }
-
-    if (validate_operand_by_mode(second_operand, dest_mode, macrosArray, total_macros, line_number) == INVALID_OPERAND)
-    {
-       
-        return SYNTAX_ERROR;
-    }
-
-    /* --- PART 3: LOGICAL CROSS-REFERENCE --- */
-    if (is_valid_addressing(operation_name, source_mode, dest_mode) == TYPE_OF_OPERANDS_ERROR)
-    {
-        printf("Error at line %d: Illegal addressing modes for instruction '%s'\n", line_number, operation_name);
-        return SYNTAX_ERROR;
-    }
-
-    /* --- PART 4: ENCODING --- */
+    /* --- Encode operation and operands --- */
     encode_operation(opcode, funct, source_mode, dest_mode, IC, line_number, state);
     encode_operand(first_operand, source_mode, IC, line_number, state);
     encode_operand(second_operand, dest_mode, IC, line_number, state);

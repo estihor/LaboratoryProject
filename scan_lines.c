@@ -96,45 +96,60 @@ int check_and_skip_comma(char* line, int index)
  * Validates the syntax and content of a string literal operand.
  * Ensures the string is enclosed in double quotes, contains only printable
  * ASCII characters, and has no extraneous text after the closing quote.
+ * Now includes specific error message prints for accurate debugging.
  *
  * @param line The original line of text from the file.
  * @param index The current position in the line array.
+ * @param line_number The current line number for error reporting.
  * @return OK_STRING if the string is valid, STRING_ERROR otherwise.
  */
-int is_str_valid(char* line, int index)
+int is_str_valid(char* line, int index, int line_number)
 {
     /* Skip white spaces before the expected opening quote */
     index = skip_the_spaces(line, index);
 
-    /* Check for the opening double quote */
-    if (line[index] != '"')
+    /* 1. Check if string is missing entirely */
+    if (line[index] == '\n' || line[index] == '\0') {
+        printf("Error at line %d: Missing string parameter.\n", line_number);
         return STRING_ERROR;
+    }
+
+    /* 2. Check for the opening double quote */
+    if (line[index] != '"') {
+        printf("Error at line %d: String must start with an opening quote (\").\n", line_number);
+        return STRING_ERROR;
+    }
 
     index++;
 
-    /* Run through the string until a closing quote, newline, or null terminator */
+    /* 3. Run through the string until a closing quote, newline, or null terminator */
     while (line[index] != '"' && line[index] != '\n' && line[index] != '\0')
     {
         /* Verify that the character is a valid printable ASCII character */
-        if (!(line[index] >= ' ' && line[index] <= '~'))
+        if (!(line[index] >= ' ' && line[index] <= '~')) {
+            printf("Error at line %d: Illegal or non-printable character found inside the string.\n", line_number);
             return STRING_ERROR;
+        }
 
         index++;
     }
 
-    /* Ensure the loop actually stopped at the closing double quote */
-    if (line[index] != '"')
+    /* 4. Ensure the loop actually stopped at the closing double quote */
+    if (line[index] != '"') {
+        printf("Error at line %d: String is missing a closing quote (\").\n", line_number);
         return STRING_ERROR;
+    }
 
     index++;
 
-    /* Skip white spaces after the string to check for trailing garbage */
+    /* 5. Skip white spaces after the string to check for trailing garbage */
     index = skip_the_spaces(line, index);
 
     /* Verify we reached a clean newline or null terminator */
-    if (line[index] != '\n' && line[index] != '\0')
+    if (line[index] != '\n' && line[index] != '\0') {
+        printf("Error at line %d: Extraneous text after the string.\n", line_number);
         return STRING_ERROR;
+    }
 
     return OK_STRING;
 }
-

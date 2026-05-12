@@ -41,6 +41,7 @@ int is_it_an_operation_and_find_opcode_and_funct(char* name, unsigned int* opcod
 int is_it_an_operation_and_find_operands(char* name, unsigned int* num_of_operands);
 int is_it_a_register(char* name);
 int is_it_an_instruction(char* name);
+int is_instruction_without_dot(char* name);
 int is_reserved_word(OneMakro* macrosArray, char* name, int totalMacros);
 int what_is_the_addressing_mode(char* argument);
 int is_it_a_valid_label(OneMakro* macrosArray, char* name, int totalMacros, int line_number);
@@ -49,3 +50,6 @@ int is_addressing_mode_2_valid(OneMakro* macrosArray, char* argument, int totalM
 int is_valid_addressing(char* operation_name, int source_mode, int destination_mode);
 int is_it_a_macro(OneMakro* macrosArray, char* name, int totalMacros);
 int validate_operand_by_mode(char* operand, int mode, OneMakro* macrosArray, int total_macros, int line_number);
+
+
+

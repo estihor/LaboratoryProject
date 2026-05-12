@@ -77,19 +77,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />
-    <None Include="good_test.as">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="bad_test.as">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="test_macro_logic.as">
-      <Filter>Source Files</Filter>
-    </None>
     <None Include="pass2_perfect.as">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="pass2_errors.as">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>
